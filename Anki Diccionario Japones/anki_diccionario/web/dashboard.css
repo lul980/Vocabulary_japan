@@ -1,0 +1,531 @@
+/* Diccionario japonés: estilos del panel.
+   Paleta "aizome": cada palabra se tiñe de índigo más oscuro conforme la aprendes. */
+
+.adic {
+  color-scheme: light;
+  --paper: #f1f4f7;
+  --sheet: #fbfcfd;
+  --ink: #18233a;
+  --ink-2: #4b586e;
+  --ink-3: #6f7b8f;
+  --rule: #d6dde6;
+  --cover: #1f3b73;
+  --cover-ink: #f4f7fb;
+  --slip: #f7f5ef;
+  --focus: #2f6fd6;
+
+  /* Escala secuencial (de nueva a madura) */
+  --st-new: #dbe1e9;
+  --st-learning: #b3c7e6;
+  --st-young: #6488c5;
+  --st-mature: #1f3b73;
+  --st-suspended: #98a2b3;
+  --st-leech: #c2452b;
+
+  --font-ui: "Segoe UI Variable Text", "Segoe UI", "Inter", "Hiragino Sans", "Yu Gothic UI",
+    "Noto Sans CJK JP", system-ui, sans-serif;
+  --font-jp: "Yu Gothic", "YuGothic", "Hiragino Sans", "Hiragino Kaku Gothic ProN",
+    "Noto Sans CJK JP", "Noto Sans JP", "Meiryo", sans-serif;
+}
+
+.nightMode .adic,
+[data-theme="dark"] .adic {
+  color-scheme: dark;
+  --paper: #10151f;
+  --sheet: #182131;
+  --ink: #e5eaf2;
+  --ink-2: #a8b3c5;
+  --ink-3: #8390a4;
+  --rule: #263248;
+  --cover: #172744;
+  --cover-ink: #e9eef7;
+  --slip: #e3e8f0;
+  --focus: #7fb0ff;
+
+  --st-new: #232d3e;
+  --st-learning: #2d4a7a;
+  --st-young: #4f7bc4;
+  --st-mature: #a9c3ef;
+  --st-suspended: #5d687c;
+  --st-leech: #ef7d61;
+}
+
+html, body {
+  margin: 0;
+  padding: 0;
+}
+
+body {
+  background: #f1f4f7;
+}
+
+body.nightMode,
+[data-theme="dark"] body {
+  background: #10151f;
+}
+
+.adic {
+  min-height: 100vh;
+  background: var(--paper);
+  color: var(--ink);
+  font-family: var(--font-ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+.adic *, .adic *::before, .adic *::after { box-sizing: border-box; }
+
+.adic h1, .adic h2, .adic p, .adic ol, .adic ul { margin: 0; }
+
+.adic h2 {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0;
+}
+
+.adic button, .adic select { font: inherit; color: inherit; }
+
+.adic :focus-visible {
+  outline: 2px solid var(--focus);
+  outline-offset: 2px;
+}
+
+.sr-only {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+/* ---------- Portada (header) ---------- */
+
+.cover {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  padding: 14px 32px;
+  background: var(--cover);
+  color: var(--cover-ink);
+}
+
+/* Etiqueta vertical del título, como en los libros japoneses cosidos (題簽) */
+.daisen {
+  flex: none;
+  width: 34px;
+  padding: 7px 0;
+  background: var(--slip);
+  border: 1px solid var(--slip);
+  box-shadow: inset 0 0 0 2px var(--slip), inset 0 0 0 3px rgba(24, 35, 58, .55);
+  color: #18233a;
+  display: flex;
+  justify-content: center;
+}
+
+.daisen span {
+  writing-mode: vertical-rl;
+  font-family: var(--font-jp);
+  font-weight: 700;
+  font-size: 15px;
+  letter-spacing: .18em;
+  line-height: 1;
+}
+
+.cover-text { flex: 1; min-width: 0; }
+
+.cover h1 {
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.cover-text p {
+  font-size: 13px;
+  opacity: .78;
+}
+
+.cover-controls {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
+
+.deck-picker select,
+.cover-button {
+  height: 32px;
+  border-radius: 6px;
+  border: 1px solid rgba(255, 255, 255, .32);
+  background: rgba(255, 255, 255, .08);
+  color: var(--cover-ink);
+  padding: 0 12px;
+  cursor: pointer;
+}
+
+.deck-picker select { max-width: 280px; padding-right: 8px; }
+.deck-picker option { color: #18233a; background: #fff; }
+.cover-button:hover, .deck-picker select:hover { background: rgba(255, 255, 255, .16); }
+.cover-button[disabled] { opacity: .55; cursor: default; }
+
+/* ---------- Página ---------- */
+
+.page {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 28px 32px 8px;
+}
+
+.loading {
+  padding: 64px 0;
+  color: var(--ink-2);
+}
+
+.hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.hero-number {
+  display: block;
+  font-size: 64px;
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: -.02em;
+}
+
+.hero-caption {
+  margin-top: 6px;
+  font-size: 16px;
+  color: var(--ink-2);
+}
+
+.hero-side {
+  display: flex;
+  gap: 28px;
+  text-align: right;
+}
+
+.hero-stat strong {
+  display: block;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.hero-stat span {
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.hero-stat .flag {
+  display: inline-block;
+  margin-right: 6px;
+  background: var(--st-leech);
+  vertical-align: -1px;
+}
+
+/* Barra segmentada delgada */
+.progress { margin-top: 20px; }
+
+.segbar {
+  display: flex;
+  gap: 2px;
+  height: 8px;
+}
+
+.segbar span {
+  height: 100%;
+  border-radius: 4px;
+  min-width: 0;
+}
+
+.legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px 22px;
+  list-style: none;
+  padding: 0;
+  margin-top: 12px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.legend li { display: flex; align-items: center; gap: 7px; }
+.legend b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.swatch {
+  width: 11px;
+  height: 11px;
+  border-radius: 3px;
+  flex: none;
+}
+
+.swatch.is-suspended {
+  background: transparent !important;
+  box-shadow: inset 0 0 0 1.5px var(--st-suspended);
+}
+
+.swatch.is-leech {
+  width: 9px; height: 9px;
+  border-radius: 1px;
+  transform: rotate(45deg);
+}
+
+.note {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* ---------- Mapa del mazo ---------- */
+
+.deckmap {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+
+.section-head {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 14px;
+}
+
+.section-sub {
+  margin-top: 2px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.toggle {
+  display: inline-flex;
+  padding: 2px;
+  border-radius: 7px;
+  background: var(--st-new);
+}
+
+.toggle button {
+  border: 0;
+  background: transparent;
+  padding: 4px 12px;
+  border-radius: 5px;
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.toggle button[aria-pressed="true"] {
+  background: var(--sheet);
+  color: var(--ink);
+  box-shadow: 0 1px 2px rgba(24, 35, 58, .12);
+}
+
+.grid-wrap { position: relative; }
+
+#grid {
+  display: block;
+  width: 100%;
+  cursor: crosshair;
+  border-radius: 2px;
+}
+
+.tip {
+  position: absolute;
+  z-index: 5;
+  width: 240px;
+  padding: 12px 14px;
+  border-radius: 8px;
+  background: var(--sheet);
+  border: 1px solid var(--rule);
+  box-shadow: 0 6px 20px rgba(16, 24, 40, .14);
+  pointer-events: none;
+  font-size: 13px;
+}
+
+.tip .tip-word {
+  font-family: var(--font-jp);
+  font-size: 24px;
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.tip .tip-meaning { color: var(--ink); margin-bottom: 8px; }
+
+.tip dl {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 2px 12px;
+  margin: 0;
+  padding-top: 8px;
+  border-top: 1px solid var(--rule);
+  color: var(--ink-2);
+}
+
+.tip dd { margin: 0; color: var(--ink); text-align: right; font-variant-numeric: tabular-nums; }
+.tip .tip-status { display: inline-flex; align-items: center; gap: 6px; }
+
+/* Furigana */
+.adic ruby { ruby-position: over; }
+.adic rt {
+  font-family: var(--font-jp);
+  font-size: .42em;
+  font-weight: 500;
+  color: var(--ink-2);
+  letter-spacing: .04em;
+}
+
+/* ---------- Ritmo y listas ---------- */
+
+.rhythm,
+.lists {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+
+.rhythm-body {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+  gap: 40px;
+  align-items: center;
+}
+
+.chart { position: relative; margin-top: 12px; }
+.chart svg { display: block; width: 100%; overflow: visible; }
+.chart .axis text { fill: var(--ink-3); font-size: 11px; }
+.chart .axis line { stroke: var(--rule); stroke-width: 1; }
+.chart .bar { fill: var(--st-young); }
+.chart .bar.is-current { fill: var(--st-learning); }
+.chart .bar-hit { fill: transparent; cursor: default; }
+.chart .bar-hit:hover + .bar, .chart .bar.is-hover { fill: var(--st-mature); }
+.chart .value { fill: var(--ink); font-size: 12px; font-weight: 600; }
+.chart .chart-empty {
+  padding: 28px 0;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.chart .tip { width: auto; white-space: nowrap; padding: 6px 10px; }
+
+.projection {
+  max-width: 46ch;
+  font-size: 15px;
+  line-height: 1.6;
+  color: var(--ink-2);
+}
+
+.projection b { color: var(--ink); font-weight: 600; }
+
+.lists {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 40px;
+}
+
+.wordlist ol {
+  list-style: none;
+  padding: 0;
+  margin-top: 8px;
+}
+
+.wordlist li {
+  display: grid;
+  grid-template-columns: minmax(84px, auto) 1fr auto;
+  align-items: baseline;
+  gap: 14px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.wordlist li:last-child { border-bottom: 0; }
+
+.wordlist .w {
+  font-family: var(--font-jp);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.7;
+  white-space: nowrap;
+}
+
+.wordlist .m {
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.wordlist .d {
+  font-size: 12px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+
+.wordlist .list-empty {
+  display: block;
+  padding: 10px 0;
+  color: var(--ink-2);
+  font-size: 13px;
+  border: 0;
+}
+
+/* ---------- Vacío y fuente ---------- */
+
+.empty {
+  padding: 56px 0;
+  max-width: 56ch;
+}
+
+.empty h2 { font-size: 20px; margin-bottom: 8px; }
+.empty p { color: var(--ink-2); }
+
+.source {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 16px 32px 32px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.source summary {
+  cursor: pointer;
+  color: var(--ink-2);
+  width: max-content;
+}
+
+.source table {
+  margin-top: 10px;
+  border-collapse: collapse;
+  width: 100%;
+}
+
+.source th, .source td {
+  text-align: left;
+  padding: 6px 16px 6px 0;
+  border-bottom: 1px solid var(--rule);
+  font-weight: 400;
+}
+
+.source th { color: var(--ink-3); font-size: 12px; }
+.source td { color: var(--ink); }
+.source code { font-family: inherit; font-weight: 600; }
+.source p { margin-top: 10px; }
+
+/* ---------- Pantallas angostas ---------- */
+
+@media (max-width: 760px) {
+  .cover { flex-wrap: wrap; padding: 12px 16px; }
+  .cover-controls { width: 100%; }
+  .deck-picker, .deck-picker select { flex: 1; max-width: none; width: 100%; }
+  .page { padding: 20px 16px 8px; }
+  .source { padding: 16px; }
+  .hero { flex-direction: column; align-items: flex-start; }
+  .hero-side { text-align: left; }
+  .section-head { flex-direction: column; align-items: flex-start; }
+  .rhythm-body, .lists { grid-template-columns: 1fr; gap: 24px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .adic * { transition: none !important; animation: none !important; }
+}

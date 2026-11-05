@@ -1,0 +1,7 @@
+__pycache__/
+*.pyc
+meta.json
+*.apkg
+*.colpkg
+*.anki2
+*.anki21

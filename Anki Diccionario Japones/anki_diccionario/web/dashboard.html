@@ -1,0 +1,84 @@
+<div class="adic" id="adic">
+  <header class="cover">
+    <div class="daisen" aria-hidden="true"><span>単語帳</span></div>
+    <div class="cover-text">
+      <h1 data-i18n="title">Diccionario japonés</h1>
+      <p data-i18n="subtitle">Tu progreso con el vocabulario de Anki</p>
+    </div>
+    <div class="cover-controls">
+      <label class="deck-picker">
+        <span class="sr-only" data-i18n="deckLabel">Mazo</span>
+        <select id="deck-select" disabled></select>
+      </label>
+      <button type="button" id="refresh" class="cover-button" data-i18n="refresh">Actualizar</button>
+    </div>
+  </header>
+
+  <main class="page" id="page" aria-busy="true">
+    <p class="loading" id="loading" data-i18n="loading">Leyendo tu mazo…</p>
+
+    <section class="hero" id="hero" hidden>
+      <div class="hero-figure">
+        <span class="hero-number" id="known-count">0</span>
+        <p class="hero-caption" id="hero-caption"></p>
+      </div>
+      <div class="hero-side" id="hero-side"></div>
+    </section>
+
+    <section class="progress" id="progress" hidden>
+      <div class="segbar" id="segbar" role="img"></div>
+      <ul class="legend" id="legend"></ul>
+      <p class="note" id="definition-note"></p>
+    </section>
+
+    <section class="deckmap" id="deckmap" hidden>
+      <div class="section-head">
+        <div>
+          <h2 data-i18n="mapTitle">Tu mazo, palabra por palabra</h2>
+          <p class="section-sub" id="map-sub"></p>
+        </div>
+        <div class="toggle" role="group" id="order-toggle">
+          <button type="button" data-order="deck" aria-pressed="true" data-i18n="orderDeck">Orden del mazo</button>
+          <button type="button" data-order="status" aria-pressed="false" data-i18n="orderStatus">Por estado</button>
+        </div>
+      </div>
+      <div class="grid-wrap" id="grid-wrap">
+        <canvas id="grid" tabindex="0" role="img"></canvas>
+        <div class="tip" id="tip" hidden></div>
+      </div>
+    </section>
+
+    <div id="lower" hidden>
+      <section class="rhythm">
+        <h2 data-i18n="rhythmTitle">Palabras nuevas por semana</h2>
+        <div class="rhythm-body">
+          <div class="chart" id="week-chart"></div>
+          <p class="projection" id="projection"></p>
+        </div>
+      </section>
+
+      <section class="lists">
+        <div class="wordlist">
+          <h2 data-i18n="recentTitle">Recién aprendidas</h2>
+          <ol id="recent-list"></ol>
+        </div>
+        <div class="wordlist">
+          <h2 data-i18n="hardTitle">Te cuestan trabajo</h2>
+          <ol id="hard-list"></ol>
+        </div>
+      </section>
+    </div>
+
+    <section class="empty" id="empty" hidden>
+      <h2 id="empty-title"></h2>
+      <p id="empty-body"></p>
+    </section>
+  </main>
+
+  <footer class="source" id="source" hidden>
+    <details>
+      <summary data-i18n="sourceTitle">Cómo se leyó tu mazo</summary>
+      <div id="source-body"></div>
+    </details>
+  </footer>
+</div>
