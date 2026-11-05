@@ -1,0 +1,18 @@
+jmdict_pos.tsv.gz se generó a partir del diccionario JMdict.
+
+JMdict es propiedad del Electronic Dictionary Research and Development Group
+(EDRDG) y se usa de acuerdo con su licencia: Creative Commons
+Attribution-ShareAlike 4.0 International (CC BY-SA 4.0).
+
+  https://www.edrdg.org/wiki/JMdict-EDICT_Dictionary_Project.html
+  https://www.edrdg.org/edrdg/licence.html
+
+El archivo jmdict_pos.tsv.gz (palabra, lectura y categorías gramaticales)
+es una obra derivada y se distribuye bajo la misma licencia CC BY-SA 4.0.
+
+---
+
+jmdict_pos.tsv.gz was generated from the JMdict dictionary, property of the
+Electronic Dictionary Research and Development Group (EDRDG), used in
+conformance with its licence (CC BY-SA 4.0). The derived file is distributed
+under the same CC BY-SA 4.0 licence.

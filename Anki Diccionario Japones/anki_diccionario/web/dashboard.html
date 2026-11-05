@@ -14,65 +14,89 @@
     </div>
   </header>
 
-  <main class="page" id="page" aria-busy="true">
-    <p class="loading" id="loading" data-i18n="loading">Leyendo tu mazo…</p>
+  <nav class="tabs" role="tablist" id="tabs">
+    <div class="tabs-inner">
+      <button type="button" role="tab" id="tab-progress" aria-controls="panel-progress" aria-selected="true" data-i18n="tabProgress">Progreso</button>
+      <button type="button" role="tab" id="tab-dictionary" aria-controls="panel-dictionary" aria-selected="false" tabindex="-1" data-i18n="tabDictionary">Diccionario</button>
+    </div>
+  </nav>
 
-    <section class="hero" id="hero" hidden>
-      <div class="hero-figure">
-        <span class="hero-number" id="known-count">0</span>
-        <p class="hero-caption" id="hero-caption"></p>
-      </div>
-      <div class="hero-side" id="hero-side"></div>
-    </section>
+  <main id="page" aria-busy="true">
+    <div class="page tab-panel" id="panel-progress" role="tabpanel" aria-labelledby="tab-progress">
+      <p class="loading" id="loading" data-i18n="loading">Leyendo tu mazo…</p>
 
-    <section class="progress" id="progress" hidden>
-      <div class="segbar" id="segbar" role="img"></div>
-      <ul class="legend" id="legend"></ul>
-      <p class="note" id="definition-note"></p>
-    </section>
-
-    <section class="deckmap" id="deckmap" hidden>
-      <div class="section-head">
-        <div>
-          <h2 data-i18n="mapTitle">Tu mazo, palabra por palabra</h2>
-          <p class="section-sub" id="map-sub"></p>
+      <section class="hero" id="hero" hidden>
+        <div class="hero-figure">
+          <span class="hero-number" id="known-count">0</span>
+          <p class="hero-caption" id="hero-caption"></p>
         </div>
-        <div class="toggle" role="group" id="order-toggle">
-          <button type="button" data-order="deck" aria-pressed="true" data-i18n="orderDeck">Orden del mazo</button>
-          <button type="button" data-order="status" aria-pressed="false" data-i18n="orderStatus">Por estado</button>
-        </div>
-      </div>
-      <div class="grid-wrap" id="grid-wrap">
-        <canvas id="grid" tabindex="0" role="img"></canvas>
-        <div class="tip" id="tip" hidden></div>
-      </div>
-    </section>
+        <div class="hero-side" id="hero-side"></div>
+      </section>
 
-    <div id="lower" hidden>
-      <section class="rhythm">
-        <h2 data-i18n="rhythmTitle">Palabras nuevas por semana</h2>
-        <div class="rhythm-body">
-          <div class="chart" id="week-chart"></div>
-          <p class="projection" id="projection"></p>
+      <section class="progress" id="progress" hidden>
+        <div class="segbar" id="segbar" role="img"></div>
+        <ul class="legend" id="legend"></ul>
+        <p class="note" id="definition-note"></p>
+      </section>
+
+      <section class="deckmap" id="deckmap" hidden>
+        <div class="section-head">
+          <div>
+            <h2 data-i18n="mapTitle">Tu mazo, palabra por palabra</h2>
+            <p class="section-sub" id="map-sub"></p>
+          </div>
+          <div class="toggle" role="group" id="order-toggle">
+            <button type="button" data-order="deck" aria-pressed="true" data-i18n="orderDeck">Orden del mazo</button>
+            <button type="button" data-order="status" aria-pressed="false" data-i18n="orderStatus">Por estado</button>
+          </div>
+        </div>
+        <div class="grid-wrap" id="grid-wrap">
+          <canvas id="grid" tabindex="0" role="img"></canvas>
+          <div class="tip" id="tip" hidden></div>
         </div>
       </section>
 
-      <section class="lists">
-        <div class="wordlist">
-          <h2 data-i18n="recentTitle">Recién aprendidas</h2>
-          <ol id="recent-list"></ol>
-        </div>
-        <div class="wordlist">
-          <h2 data-i18n="hardTitle">Te cuestan trabajo</h2>
-          <ol id="hard-list"></ol>
-        </div>
+      <section class="cats" id="cats" hidden>
+        <h2 data-i18n="catsTitle">Por categoría</h2>
+        <p class="section-sub" id="cats-sub"></p>
+        <ul class="cat-list" id="cat-list"></ul>
+        <p class="note" id="cats-note"></p>
+      </section>
+
+      <div id="lower" hidden>
+        <section class="rhythm">
+          <h2 data-i18n="rhythmTitle">Palabras nuevas por semana</h2>
+          <div class="rhythm-body">
+            <div class="chart" id="week-chart"></div>
+            <p class="projection" id="projection"></p>
+          </div>
+        </section>
+
+        <section class="lists">
+          <div class="wordlist">
+            <h2 data-i18n="recentTitle">Recién aprendidas</h2>
+            <ol id="recent-list"></ol>
+          </div>
+          <div class="wordlist">
+            <h2 data-i18n="hardTitle">Te cuestan trabajo</h2>
+            <ol id="hard-list"></ol>
+          </div>
+        </section>
+      </div>
+
+      <section class="empty" id="empty" hidden>
+        <h2 id="empty-title"></h2>
+        <p id="empty-body"></p>
       </section>
     </div>
 
-    <section class="empty" id="empty" hidden>
-      <h2 id="empty-title"></h2>
-      <p id="empty-body"></p>
-    </section>
+    <div class="page tab-panel" id="panel-dictionary" role="tabpanel" aria-labelledby="tab-dictionary" hidden>
+      <section class="soon">
+        <h2 data-i18n="soonTitle">Tu diccionario llega en la siguiente versión</h2>
+        <p data-i18n="soonBody">Aquí vas a poder ver todas tus palabras, buscarlas por kanji, lectura o significado, y filtrarlas por categoría, estado y nivel JLPT.</p>
+        <ul class="soon-preview" id="soon-preview"></ul>
+      </section>
+    </div>
   </main>
 
   <footer class="source" id="source" hidden>

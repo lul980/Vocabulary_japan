@@ -76,7 +76,8 @@ body.nightMode,
 
 .adic *, .adic *::before, .adic *::after { box-sizing: border-box; }
 
-.adic h1, .adic h2, .adic p, .adic ol, .adic ul { margin: 0; }
+/* :where() deja la especificidad baja para que los márgenes de cada sección ganen */
+.adic :where(h1, h2, p, ol, ul) { margin: 0; }
 
 .adic h2 {
   font-size: 15px;
@@ -163,6 +164,45 @@ body.nightMode,
 .deck-picker option { color: #18233a; background: #fff; }
 .cover-button:hover, .deck-picker select:hover { background: rgba(255, 255, 255, .16); }
 .cover-button[disabled] { opacity: .55; cursor: default; }
+
+/* ---------- Pestañas ---------- */
+
+.tabs {
+  border-bottom: 1px solid var(--rule);
+  background: var(--paper);
+}
+
+.tabs-inner {
+  max-width: 1080px;
+  margin: 0 auto;
+  padding: 0 32px;
+  display: flex;
+  gap: 28px;
+}
+
+.tabs button {
+  position: relative;
+  border: 0;
+  background: transparent;
+  padding: 14px 0 12px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--ink-3);
+  cursor: pointer;
+}
+
+.tabs button:hover { color: var(--ink-2); }
+
+.tabs button[aria-selected="true"] { color: var(--ink); }
+
+.tabs button[aria-selected="true"]::after {
+  content: "";
+  position: absolute;
+  left: 0; right: 0; bottom: -1px;
+  height: 2px;
+  border-radius: 2px 2px 0 0;
+  background: var(--st-mature);
+}
 
 /* ---------- Página ---------- */
 
@@ -375,6 +415,119 @@ body.nightMode,
   letter-spacing: .04em;
 }
 
+/* ---------- Por categoría ---------- */
+
+.cats {
+  margin-top: 32px;
+  padding-top: 24px;
+  border-top: 1px solid var(--rule);
+}
+
+.cat-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 16px;
+}
+
+.cat {
+  display: grid;
+  grid-template-columns: 200px minmax(0, 1fr) 120px;
+  column-gap: 24px;
+  align-items: center;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.cat:last-child { border-bottom: 0; }
+
+.cat-name { display: flex; align-items: baseline; gap: 10px; }
+.cat-name strong { font-weight: 600; }
+.cat-name .jp {
+  font-family: var(--font-jp);
+  font-size: 13px;
+  color: var(--ink-3);
+}
+
+.cat .segbar { height: 8px; }
+.cat .segbar .rest { background: var(--st-new); }
+
+.cat-count {
+  text-align: right;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.cat-count b { color: var(--ink); font-weight: 600; }
+
+.cat-subs {
+  grid-column: 2 / 4;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 2px 20px;
+  margin-top: 6px;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+.cat-subs b { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
+.cat.is-none .cat-name strong { color: var(--ink-2); font-weight: 500; }
+
+/* Etiquetas de categoría */
+.chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
+
+.chip {
+  display: inline-block;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--st-new);
+  color: var(--ink-2);
+  font-size: 12px;
+  line-height: 1.6;
+  white-space: nowrap;
+}
+
+.chip.is-primary {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px var(--st-young);
+  color: var(--ink);
+}
+
+/* ---------- Diccionario (próximamente) ---------- */
+
+.soon { padding: 8px 0 40px; max-width: 760px; }
+.soon h2 { font-size: 20px; margin-bottom: 8px; }
+.soon > p { color: var(--ink-2); max-width: 60ch; }
+
+.soon-preview {
+  list-style: none;
+  padding: 0;
+  margin-top: 28px;
+  border-top: 1px solid var(--rule);
+}
+
+.soon-preview li {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr) auto;
+  gap: 16px;
+  align-items: baseline;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.soon-preview .w {
+  font-family: var(--font-jp);
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.7;
+}
+
+.soon-preview .m {
+  color: var(--ink-2);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
 /* ---------- Ritmo y listas ---------- */
 
 .rhythm,
@@ -524,6 +677,11 @@ body.nightMode,
   .hero-side { text-align: left; }
   .section-head { flex-direction: column; align-items: flex-start; }
   .rhythm-body, .lists { grid-template-columns: 1fr; gap: 24px; }
+  .tabs-inner { padding: 0 16px; }
+  .cat { grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; }
+  .cat .segbar { grid-column: 1 / 3; grid-row: 2; }
+  .cat-subs { grid-column: 1 / 3; }
+  .soon-preview li { grid-template-columns: 1fr; gap: 2px; }
 }
 
 @media (prefers-reduced-motion: reduce) {

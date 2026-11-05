@@ -19,6 +19,7 @@ sys.path.insert(0, os.path.dirname(HERE))
 sys.path.insert(0, HERE)
 
 from anki_diccionario import fields  # noqa: E402
+from anki_diccionario.categories import Classifier, groups_for  # noqa: E402
 from anki_diccionario.collector import (  # noqa: E402
     build_dashboard_data, card_status, resolve_deck_id, summarize, word_status,
 )
@@ -79,6 +80,50 @@ def test_fields() -> bool:
     return all(results)
 
 
+MINI_INDEX = """#JMdict\t2026-01-01\tEDRDG CC BY-SA 4.0
+私\tわたし\tpronoun,noun\t2
+直ぐ\tすぐ\tadverb,adj_na\t3
+勉強\tべんきょう\tnoun,suru,vt\t2
+好き\tすき\tadj_na,noun\t2
+食べる\tたべる\tichidan,vt\t2
+\tテレビ\tnoun\t3
+\tさん\tsuffix\t3
+食べ物\tたべもの\tnoun\t2
+着る\tきる\tichidan,vt\t2
+切る\tきる\tgodan,vt\t2
+"""
+
+
+def mini_classifier() -> Classifier:
+    import gzip
+    tmp = tempfile.mkdtemp(prefix="adic-pos-")
+    gz = os.path.join(tmp, "mini.tsv.gz")
+    with gzip.open(gz, "wt", encoding="utf-8") as fh:
+        fh.write(MINI_INDEX)
+    return Classifier(gz, os.path.join(tmp, "cache.sqlite"))
+
+
+def test_categories() -> bool:
+    print("Categorías (índice de prueba)")
+    clf = mini_classifier()
+    if not clf.open():
+        print("  FALLA no se pudo abrir el índice")
+        return False
+    return all([
+        check("fuente", clf.source, "JMdict 2026-01-01"),
+        check("kanji + lectura", clf.classify("私", "わたし"), ["pronoun", "noun"]),
+        check("solo kana (uk)", clf.classify("すぐ", "すぐ"), ["adverb", "adj_na"]),
+        check("lectura en hiragana de palabra katakana", clf.classify("テレビ", "てれび"), ["noun"]),
+        check("con 〜", clf.classify("〜さん", "さん"), ["suffix"]),
+        check("varias formas", clf.classify("食べ物、食物", "たべもの"), ["noun"]),
+        check("verbo con する", clf.classify("勉強する", "べんきょうする"), ["irregular", "vt"]),
+        check("sin lectura", clf.classify("好き"), ["adj_na", "noun"]),
+        check("no está", clf.classify("ゾゾゾ", "ぞぞぞ"), []),
+        check("grupos", groups_for(["adj_na", "noun", "vt"]), ["adjective", "noun"]),
+        check("grupos verbo", groups_for(["godan", "vt", "suru"]), ["verb", "noun"]),
+    ])
+
+
 def open_collection(path: str) -> FakeCollection:
     if path.endswith(".apkg") or path.endswith(".colpkg"):
         tmp = tempfile.mkdtemp(prefix="adic-")
@@ -108,7 +153,7 @@ def test_deck(path: str, json_out: str = "") -> None:
 
 
 if __name__ == "__main__":
-    ok = test_fields()
+    ok = test_fields() & test_categories()
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     json_out = ""
     if "--json" in sys.argv:

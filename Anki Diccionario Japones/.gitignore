@@ -5,3 +5,4 @@ meta.json
 *.colpkg
 *.anki2
 *.anki21
+user_files/

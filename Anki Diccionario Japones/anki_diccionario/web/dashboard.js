@@ -17,6 +17,39 @@
 
   const I18N = {
     es: {
+      tabProgress: "Progreso",
+      tabDictionary: "Diccionario",
+      catsTitle: "Por categoría",
+      catsSub: "Cuántas sabes de cada tipo de palabra.",
+      catsNote: (src) => `Una palabra puede estar en varias categorías: 好き es adjetivo な y también sustantivo. Categorías de ${src} (© EDRDG, CC BY-SA 4.0).`,
+      catsUnavailable: "No se encontró el diccionario de categorías. Vuelve a instalar el complemento.",
+      countOf: (k, n) => `<b>${k}</b> de ${n}`,
+      groups: {
+        verb: ["Verbos", "動詞"], noun: ["Sustantivos", "名詞"], adjective: ["Adjetivos", "形容詞"],
+        pronoun: ["Pronombres", "代名詞"], adverb: ["Adverbios", "副詞"], particle: ["Partículas", "助詞"],
+        conjunction: ["Conjunciones", "接続詞"], interjection: ["Interjecciones", "感動詞"],
+        counter: ["Contadores", "助数詞"], numeral: ["Números", "数詞"], expression: ["Expresiones", "表現"],
+        affix: ["Prefijos y sufijos", "接辞"], auxiliary: ["Auxiliares", "助動詞"], none: ["Sin categoría", ""],
+      },
+      subs: {
+        godan: "godan 五段", ichidan: "ichidan 一段", irregular: "irregulares する・来る", verb_other: "otros",
+        suru: "con する", adj_i: "い", adj_na: "な", prenominal: "連体詞", adj_other: "otros",
+        prefix: "prefijos", suffix: "sufijos",
+      },
+      tags: {
+        godan: "verbo godan", ichidan: "verbo ichidan", irregular: "verbo irregular", verb_other: "verbo",
+        suru: "sustantivo con する", noun: "sustantivo", adj_i: "adjetivo い", adj_na: "adjetivo な",
+        prenominal: "prenominal 連体詞", adj_other: "adjetivo", pronoun: "pronombre", adverb: "adverbio",
+        particle: "partícula", conjunction: "conjunción", interjection: "interjección", counter: "contador",
+        numeral: "número", expression: "expresión", prefix: "prefijo", suffix: "sufijo", auxiliary: "auxiliar",
+        vt: "transitivo", vi: "intransitivo",
+      },
+      tipType: "Tipo",
+      noType: "sin categoría",
+      soonTitle: "Tu diccionario llega en la siguiente versión",
+      soonBody: "Aquí vas a poder ver todas tus palabras, buscarlas por kanji, lectura o significado, y filtrarlas por categoría, estado y nivel JLPT. Así se verán tus palabras con sus categorías:",
+      sourceCats: (src) => `Categorías gramaticales: ${src}, © EDRDG, licencia CC BY-SA 4.0.`,
+      sourceUnmatched: (n) => `${n} ${plural(n, "palabra no aparece", "palabras no aparecen")} en JMdict y ${plural(n, "queda", "quedan")} como “Sin categoría”.`,
       title: "Diccionario japonés",
       subtitle: "Tu progreso con el vocabulario de Anki",
       deckLabel: "Mazo",
@@ -67,6 +100,39 @@
       updated: (d) => `Actualizado a las ${d}`,
     },
     en: {
+      tabProgress: "Progress",
+      tabDictionary: "Dictionary",
+      catsTitle: "By category",
+      catsSub: "How many you know of each kind of word.",
+      catsNote: (src) => `A word can belong to several categories: 好き is a な-adjective and also a noun. Categories from ${src} (© EDRDG, CC BY-SA 4.0).`,
+      catsUnavailable: "The category dictionary is missing. Reinstall the add-on.",
+      countOf: (k, n) => `<b>${k}</b> of ${n}`,
+      groups: {
+        verb: ["Verbs", "動詞"], noun: ["Nouns", "名詞"], adjective: ["Adjectives", "形容詞"],
+        pronoun: ["Pronouns", "代名詞"], adverb: ["Adverbs", "副詞"], particle: ["Particles", "助詞"],
+        conjunction: ["Conjunctions", "接続詞"], interjection: ["Interjections", "感動詞"],
+        counter: ["Counters", "助数詞"], numeral: ["Numerals", "数詞"], expression: ["Expressions", "表現"],
+        affix: ["Prefixes and suffixes", "接辞"], auxiliary: ["Auxiliaries", "助動詞"], none: ["Uncategorized", ""],
+      },
+      subs: {
+        godan: "godan 五段", ichidan: "ichidan 一段", irregular: "irregular する・来る", verb_other: "other",
+        suru: "with する", adj_i: "い", adj_na: "な", prenominal: "連体詞", adj_other: "other",
+        prefix: "prefixes", suffix: "suffixes",
+      },
+      tags: {
+        godan: "godan verb", ichidan: "ichidan verb", irregular: "irregular verb", verb_other: "verb",
+        suru: "noun with する", noun: "noun", adj_i: "い-adjective", adj_na: "な-adjective",
+        prenominal: "prenominal 連体詞", adj_other: "adjective", pronoun: "pronoun", adverb: "adverb",
+        particle: "particle", conjunction: "conjunction", interjection: "interjection", counter: "counter",
+        numeral: "numeral", expression: "expression", prefix: "prefix", suffix: "suffix", auxiliary: "auxiliary",
+        vt: "transitive", vi: "intransitive",
+      },
+      tipType: "Type",
+      noType: "uncategorized",
+      soonTitle: "Your dictionary arrives in the next version",
+      soonBody: "Here you'll see all your words, search them by kanji, reading or meaning, and filter by category, status and JLPT level. This is how your words will look with their categories:",
+      sourceCats: (src) => `Grammatical categories: ${src}, © EDRDG, CC BY-SA 4.0 license.`,
+      sourceUnmatched: (n) => `${n} ${plural(n, "word isn't", "words aren't")} in JMdict and ${plural(n, "shows", "show")} as “Uncategorized”.`,
       title: "Japanese dictionary",
       subtitle: "Your progress with your Anki vocabulary",
       deckLabel: "Deck",
@@ -125,6 +191,7 @@
   let grid = null;
   let focusIndex = -1;
   let animFrame = 0;
+  let activeTab = "progress";
 
   const $ = (id) => document.getElementById(id);
   const send = (cmd) => { if (typeof window.pycmd === "function") window.pycmd(cmd); };
@@ -185,7 +252,7 @@
     $("page").setAttribute("aria-busy", "true");
     $("loading").hidden = false;
     $("refresh").disabled = true;
-    ["hero", "progress", "deckmap", "lower", "empty", "source"].forEach((id) => { $(id).hidden = true; });
+    ["hero", "progress", "deckmap", "cats", "lower", "empty", "source"].forEach((id) => { $(id).hidden = true; });
   }
 
   function showEmpty(title, body) {
@@ -354,7 +421,7 @@
     const L = grid.layout;
     const statusKey = w.status;
     const swatchColor = w.leech && statusKey !== "suspended" ? "var(--st-leech)" : `var(${STATUS_VAR[statusKey]})`;
-    const rows = [];
+    const rows = [`<dt>${t.tipType}</dt><dd>${esc(tagLabels(w.tags).slice(0, 2).join(", ") || t.noType)}</dd>`];
     if (w.status !== "new") {
       rows.push(`<dt>${t.tipInterval}</dt><dd>${t.days(w.interval)}</dd>`);
       rows.push(`<dt>${t.tipReviews}</dt><dd>${fmt(w.reviews)}</dd>`);
@@ -436,6 +503,141 @@
       showTip(-1);
       setupGrid(false);
     });
+  }
+
+
+  // ------------------------------------------------------------------
+  // Pestañas (Progreso siempre es la principal)
+  // ------------------------------------------------------------------
+
+  const TABS = ["progress", "dictionary"];
+
+  function showTab(name, focus) {
+    activeTab = name;
+    TABS.forEach((tab) => {
+      const btn = $("tab-" + tab);
+      const selected = tab === name;
+      btn.setAttribute("aria-selected", String(selected));
+      btn.tabIndex = selected ? 0 : -1;
+      $("panel-" + tab).hidden = !selected;
+      if (selected && focus) btn.focus();
+    });
+    // El canvas no se puede medir mientras está oculto: se redibuja al volver
+    if (name === "progress" && model && model.total) {
+      drawGrid(1);
+      renderWeeks();
+    }
+  }
+
+  function wireTabs() {
+    TABS.forEach((tab) => {
+      $("tab-" + tab).addEventListener("click", () => showTab(tab, false));
+    });
+    $("tabs").addEventListener("keydown", (ev) => {
+      if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
+      const i = TABS.indexOf(activeTab);
+      const next = TABS[(i + (ev.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length];
+      showTab(next, true);
+    });
+  }
+
+  // ------------------------------------------------------------------
+  // Categorías gramaticales
+  // ------------------------------------------------------------------
+
+  function tagLabels(tags) {
+    const list = (tags || []).filter((tag) => t.tags[tag]);
+    const hasVerb = list.some((tag) => ["godan", "ichidan", "irregular", "verb_other"].includes(tag));
+    return list
+      .filter((tag) => !(tag === "noun" && list.includes("suru")))
+      .filter((tag) => hasVerb || (tag !== "vt" && tag !== "vi"))
+      .map((tag) => t.tags[tag]);
+  }
+
+  function groupsOf(w, tagToGroup) {
+    const out = [];
+    (w.tags || []).forEach((tag) => {
+      const g = tagToGroup[tag];
+      if (g && !out.includes(g)) out.push(g);
+    });
+    return out;
+  }
+
+  function renderCategories() {
+    const cats = model.data.categories || {};
+    const list = $("cat-list");
+    $("cats-sub").textContent = t.catsSub;
+    if (!cats.available) {
+      list.innerHTML = "";
+      $("cats-note").textContent = t.catsUnavailable;
+      return;
+    }
+    const groups = cats.groups || {};
+    const tagToGroup = {};
+    Object.keys(groups).forEach((g) => groups[g].forEach((tag) => { tagToGroup[tag] = g; }));
+
+    const blank = () => ({ total: 0, mature: 0, young: 0, learning: 0, new: 0, suspended: 0, subs: {} });
+    const stats = {};
+    model.words.forEach((w) => {
+      let gs = groupsOf(w, tagToGroup);
+      if (!gs.length) gs = ["none"];
+      gs.forEach((g) => {
+        const st = stats[g] || (stats[g] = blank());
+        st.total += 1;
+        st[w.status] += 1;
+        if (w.status === "suspended") return;
+        (groups[g] || []).forEach((tag) => {
+          if (!(w.tags || []).includes(tag) || !t.subs[tag]) return;
+          const sub = st.subs[tag] || (st.subs[tag] = { total: 0, mature: 0 });
+          sub.total += 1;
+          if (w.status === "mature") sub.mature += 1;
+        });
+      });
+    });
+
+    const order = Object.keys(stats).sort((a, b) =>
+      (a === "none") - (b === "none") || stats[b].total - stats[a].total);
+    list.innerHTML = order.map((g) => {
+      const st = stats[g];
+      const [name, jp] = t.groups[g] || [g, ""];
+      const active = st.total - st.suspended;
+      const segs = ["mature", "young", "learning", "new"].filter((s) => st[s] > 0).map((s) =>
+        `<span style="flex:${st[s]};background:var(${STATUS_VAR[s]})" title="${esc(t.status[s])}: ${fmt(st[s])}"></span>`
+      ).join("");
+      const subs = (groups[g] || []).filter((tag) => st.subs[tag]).map((tag) =>
+        `<span>${esc(t.subs[tag])} ${t.countOf(fmt(st.subs[tag].mature), fmt(st.subs[tag].total))}</span>`
+      ).join("");
+      const label = `${name}: ${STATUS.map((s) => `${t.status[s]} ${fmt(st[s])}`).join(", ")}`;
+      return `<li class="cat${g === "none" ? " is-none" : ""}">
+          <div class="cat-name"><strong>${esc(name)}</strong>${jp ? `<span class="jp" lang="ja">${jp}</span>` : ""}</div>
+          <div class="segbar" role="img" aria-label="${esc(label)}">${segs || `<span class="rest" style="flex:1"></span>`}</div>
+          <div class="cat-count">${t.countOf(fmt(st.mature), fmt(active))}</div>
+          ${subs ? `<div class="cat-subs">${subs}</div>` : ""}
+        </li>`;
+    }).join("");
+    $("cats-note").textContent = t.catsNote(cats.source || "JMdict");
+  }
+
+  function chipsHtml(tags) {
+    const labels = tagLabels(tags);
+    if (!labels.length) return `<span class="chips"><span class="chip">${esc(t.noType)}</span></span>`;
+    return `<span class="chips">${labels.map((l, i) => `<span class="chip${i === 0 ? " is-primary" : ""}">${esc(l)}</span>`).join("")}</span>`;
+  }
+
+  // Vista previa en la pestaña Diccionario: palabras variadas con sus etiquetas
+  function renderSoon() {
+    const seen = new Set();
+    const picks = [];
+    for (const w of model.words) {
+      const key = (w.tags || [])[0] || "none";
+      if (seen.has(key) || !(w.tags || []).length) continue;
+      seen.add(key);
+      picks.push(w);
+      if (picks.length >= 8) break;
+    }
+    $("soon-preview").innerHTML = picks.map((w) =>
+      `<li><span class="w" lang="ja">${ruby(w.word, w.reading)}</span><span class="m">${esc(w.meaning)}</span>${chipsHtml(w.tags)}</li>`
+    ).join("");
   }
 
   // ------------------------------------------------------------------
@@ -611,6 +813,11 @@
     const head = t.sourceCols.map((c) => `<th scope="col">${esc(c)}</th>`).join("");
     let html = `<table><thead><tr>${head}</tr></thead><tbody>${rows}</tbody></table>`;
     if (data.skipped) html += `<p>${esc(t.skipped(fmt(data.skipped)))}</p>`;
+    const cats = data.categories || {};
+    if (cats.available) {
+      if (cats.unmatched) html += `<p>${esc(t.sourceUnmatched(fmt(cats.unmatched)))}</p>`;
+      html += `<p>${esc(t.sourceCats(cats.source || "JMdict"))}</p>`;
+    }
     html += `<p>${esc(t.howToChange)}</p>`;
     if (data.generated_at) {
       html += `<p>${esc(t.updated(new Intl.DateTimeFormat(locale(), { hour: "numeric", minute: "2-digit" }).format(new Date(data.generated_at))))}</p>`;
@@ -633,7 +840,7 @@
     $("page").setAttribute("aria-busy", "false");
     $("loading").hidden = true;
     $("refresh").disabled = false;
-    ["hero", "progress", "deckmap", "lower", "empty", "source"].forEach((id) => { $(id).hidden = true; });
+    ["hero", "progress", "deckmap", "cats", "lower", "empty", "source"].forEach((id) => { $(id).hidden = true; });
 
     if (!data.deck) {
       showEmpty(t.noDeckTitle, t.noDeckBody);
@@ -645,13 +852,15 @@
       $("source").querySelector("details").open = true;
       return;
     }
-    ["hero", "progress", "deckmap", "lower"].forEach((id) => { $(id).hidden = false; });
+    ["hero", "progress", "deckmap", "cats", "lower"].forEach((id) => { $(id).hidden = false; });
     renderHero();
     renderProgress();
     focusIndex = -1;
-    setupGrid(true);
+    setupGrid(activeTab === "progress");
+    renderCategories();
     renderWeeks();
     renderLists();
+    renderSoon();
     renderSource();
   }
 
@@ -659,7 +868,7 @@
   function onResize() {
     clearTimeout(resizeTimer);
     resizeTimer = setTimeout(() => {
-      if (!model || !model.total) return;
+      if (!model || !model.total || activeTab !== "progress") return;
       drawGrid(1);
       renderWeeks();
     }, 80);
@@ -668,6 +877,7 @@
   function init() {
     applyI18n();
     wireGrid();
+    wireTabs();
     $("refresh").addEventListener("click", () => { setLoading(); send("adic:refresh"); });
     $("deck-select").addEventListener("change", (ev) => { setLoading(); send("adic:deck:" + ev.target.value); });
     window.addEventListener("resize", onResize);

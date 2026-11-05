@@ -15,6 +15,7 @@ from __future__ import annotations
 import time
 from typing import Any, Dict, List, Optional, Tuple
 
+from .categories import GROUPS, Classifier, shared_classifier
 from .fields import detect_fields, extract_entry, has_japanese
 
 DATA_VERSION = 1
@@ -132,7 +133,8 @@ def _ids_sql(ids: List[int]) -> str:
     return "(" + ",".join(str(int(i)) for i in ids) + ")"
 
 
-def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
+def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str, Any]] = None,
+                         classifier: Optional[Classifier] = None) -> Dict[str, Any]:
     config = config or {}
     settings = dict(DEFAULT_SETTINGS)
     for key in settings:
@@ -153,6 +155,8 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
         "settings": settings,
         "fields": [],
         "skipped": 0,
+        "categories": {"available": False, "source": "", "unmatched": 0,
+                       "groups": {k: list(v) for k, v in GROUPS.items()}},
         "words": [],
     }
     if not deck_id:
@@ -245,6 +249,19 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
             "first_review": min(firsts) if firsts else None,
             "matured": matured_ms if status == "mature" else None,
         })
+
+    # Categorías gramaticales con JMdict
+    clf = classifier or shared_classifier()
+    unmatched = 0
+    if clf.open():
+        for w in words:
+            w["tags"] = clf.classify(w["word"], w["reading"])
+            if not w["tags"]:
+                unmatched += 1
+        data["categories"].update({"available": True, "source": clf.source, "unmatched": unmatched})
+    else:
+        for w in words:
+            w["tags"] = []
 
     data["words"] = words
     data["skipped"] = skipped
