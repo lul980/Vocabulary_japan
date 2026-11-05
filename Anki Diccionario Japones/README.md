@@ -83,9 +83,11 @@ python dev/package.py
 ## Hoja de ruta
 
 - [x] **Parte 1**: leer el mazo, detectar campos y mostrar el progreso
-- [ ] **Parte 2**: categorías gramaticales automáticas con JMdict (verbos godan/ichidan, adjetivos い/な, sustantivos…), con varias etiquetas por palabra
-- [ ] **Parte 3**: diccionario completo con búsqueda (kanji, kana, rōmaji, significado) y filtros por estado, categoría, nivel JLPT y kanji compartido
-- [ ] **Parte 4**: exportar a una página web aparte
+- [ ] **Parte 2**: pestañas en la ventana (Progreso siempre es la página principal) y categorías gramaticales automáticas con JMdict (verbos godan/ichidan, adjetivos い/な, sustantivos…), con varias etiquetas por palabra y una sección "Por categoría" en Progreso
+- [ ] **Parte 3**: pestaña Diccionario con todas las palabras, búsqueda (kanji, kana, rōmaji, significado) y filtros por estado, categoría, nivel JLPT y kanji compartido
+- [ ] **Parte 4**: repaso rápido dentro del complemento: eliges "Te cuestan trabajo" o "Estás aprendiendo", cuántas palabras quieres repasar, y se eligen al azar
+- [ ] **Parte 5**: configuración para personalizar el complemento: color de fondo o una imagen propia como fondo
+- [ ] **Parte 6**: exportar a una página web aparte
 
 ---
 
