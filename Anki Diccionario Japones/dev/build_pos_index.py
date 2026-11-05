@@ -25,6 +25,9 @@ from typing import Dict, List, Tuple
 HERE = os.path.dirname(os.path.abspath(__file__))
 OUT = os.path.join(os.path.dirname(HERE), "anki_diccionario", "data", "jmdict_pos.tsv.gz")
 
+# Etiquetas que sí se toman de los sentidos secundarios
+SECONDARY = {"vt", "vi", "suru"}
+
 # Prioridades que JMdict considera "palabra común"
 COMMON = {"news1", "ichi1", "spec1", "spec2", "gai1"}
 
@@ -120,6 +123,7 @@ def parse_entries(text: str):
                 "stagk": [x.text for x in s.findall("stagk")],
                 "stagr": [x.text for x in s.findall("stagr")],
                 "misc": [x.text for x in s.findall("misc")],
+                "gloss": [g.text or "" for g in s.findall("gloss")],
             })
         elem.clear()
         yield kanji, readings, senses
@@ -138,22 +142,46 @@ def entry_rows(kanji, readings, senses):
                 if not r["restr"] or k in r["restr"]:
                     pairs.append((k, kpri))
         for k, kpri in pairs:
+            # La categoría sale del significado principal: el primer sentido que
+            # aplica y que tiene categoría. De los demás solo tomamos
+            # transitividad y si lleva する, para que usos raros (行く como
+            # auxiliar) no inflen las categorías.
             tags: List[str] = []
+            glosses: List[str] = []
+            main_found = False
             for s in senses:
                 if s["stagk"] and k not in s["stagk"]:
                     continue
                 if s["stagr"] and r["text"] not in s["stagr"]:
                     continue
+                if len(glosses) < 8:
+                    glosses.extend(s["gloss"][:3])
+                added_main = False
                 for code in s["pos"]:
                     tag = map_pos(code)
-                    if tag and tag not in tags:
+                    if not tag or tag in tags:
+                        continue
+                    if not main_found or tag in SECONDARY:
                         tags.append(tag)
+                        added_main = added_main or tag not in SECONDARY
+                main_found = main_found or added_main
             if not tags:
                 continue
             common = bool(r["pri"] & COMMON) or bool(kpri & COMMON) or (not k and kanji_common)
             # rango: bit 1 = común, bit 0 = suele escribirse en kana (uk)
             rank = (2 if common else 0) | (1 if (uk or not k) else 0)
-            yield k, r["text"], ",".join(tags), rank
+            # frecuencia: banda nf01-nf48 de JMdict (menor = más frecuente)
+            bands = [int(p[2:]) for p in (r["pri"] | kpri) if p.startswith("nf") and p[2:].isdigit()]
+            freq = min(bands) if bands else (60 if common else 99)
+            gloss = "; ".join(glosses).replace("\t", " ").replace("\n", " ")[:90]
+            yield k, r["text"], ",".join(tags), rank, freq, gloss
+
+
+_KATA = {c: c - 0x60 for c in range(ord("ァ"), ord("ヶ") + 1)}
+
+
+def hira(text: str) -> str:
+    return text.translate(_KATA)
 
 
 def build(src: str, out: str = OUT) -> Dict[str, int]:
@@ -161,18 +189,30 @@ def build(src: str, out: str = OUT) -> Dict[str, int]:
     seen = set()
     rows = []
     entries = 0
+    by_kana: Dict[str, set] = {}
+    by_kanji: Dict[str, set] = {}
     for kanji, readings, senses in parse_entries(text):
         entries += 1
         for row in entry_rows(kanji, readings, senses):
             key = row[:3]
             if key not in seen:
                 seen.add(key)
-                rows.append(row)
+                rows.append(row + (entries,))
+                by_kana.setdefault(hira(row[1]), set()).add(entries)
+                if row[0]:
+                    by_kanji.setdefault(row[0], set()).add(entries)
+
+    # El significado solo hace falta para desempatar palabras que comparten
+    # lectura o kanji con otra entrada; en las demás lo omitimos (pesa menos).
+    def needs_gloss(row) -> bool:
+        return len(by_kana[hira(row[1])]) > 1 or (row[0] and len(by_kanji[row[0]]) > 1)
+
+    rows = [r[:5] + ((r[5] if needs_gloss(r) else ""),) for r in rows]
     os.makedirs(os.path.dirname(out), exist_ok=True)
     with gzip.open(out, "wt", encoding="utf-8", compresslevel=9) as fh:
         fh.write(f"#JMdict\t{date}\tEDRDG CC BY-SA 4.0\n")
-        for k, r, tags, rank in rows:
-            fh.write(f"{k}\t{r}\t{tags}\t{rank}\n")
+        for k, r, tags, rank, freq, gloss in rows:
+            fh.write(f"{k}\t{r}\t{tags}\t{rank}\t{freq}\t{gloss}\n" if gloss else f"{k}\t{r}\t{tags}\t{rank}\t{freq}\n")
     return {"entries": entries, "rows": len(rows), "bytes": os.path.getsize(out), "date": date}
 
 

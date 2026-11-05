@@ -46,6 +46,14 @@ _KATA_TO_HIRA = {c: c - 0x60 for c in range(ord("ァ"), ord("ヶ") + 1)}
 _PARENS_RE = re.compile(r"[（(【\[].*?[）)】\]]")
 _SPLIT_RE = re.compile(r"[、,，/／;；・]")
 _TILDE_RE = re.compile(r"[〜～~]")
+_WORD_RE = re.compile(r"[a-z]+")
+_STOP = {"to", "the", "a", "an", "of", "be", "in", "on", "is", "it", "for", "with", "and", "or", "as",
+         "at", "by", "one", "ones", "s", "something", "someone", "sth", "etc", "esp", "usu", "used", "e", "g"}
+
+
+def _gloss_words(text: str) -> set:
+    """Palabras clave de un significado en inglés (recortadas para ignorar plurales)."""
+    return {w[:5] for w in _WORD_RE.findall((text or "").lower()) if w not in _STOP}
 
 
 def to_hiragana(text: str) -> str:
@@ -104,7 +112,7 @@ class Classifier:
         if os.path.exists(tmp):
             os.remove(tmp)
         db = sqlite3.connect(tmp)
-        db.execute("create table words (kanji text, kana text, kana_h text, tags text, rank int)")
+        db.execute("create table words (kanji text, kana_h text, tags text, rank int, freq int, gloss text)")
         db.execute("create table meta (key text primary key, value text)")
         source = "JMdict"
         rows = []
@@ -114,11 +122,13 @@ class Classifier:
                 if parts[0] == "#JMdict":
                     source = f"JMdict {parts[1]}".strip()
                     continue
-                if len(parts) != 4:
+                if len(parts) < 4:
                     continue
-                kanji, kana, tags, rank = parts
-                rows.append((kanji, kana, to_hiragana(kana), tags, int(rank)))
-        db.executemany("insert into words values (?,?,?,?,?)", rows)
+                kanji, kana, tags, rank = parts[:4]
+                freq = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else 99
+                gloss = parts[5] if len(parts) > 5 else ""
+                rows.append((kanji, to_hiragana(kana), tags, int(rank), freq, gloss))
+        db.executemany("insert into words values (?,?,?,?,?,?)", rows)
         db.execute("create index idx_kanji on words(kanji)")
         db.execute("create index idx_kana on words(kana_h)")
         db.executemany("insert into meta values (?,?)", [("stamp", stamp), ("source", source)])
@@ -135,44 +145,58 @@ class Classifier:
 
     # ---------- búsqueda ----------
 
-    def _best(self, rows: List[Tuple[str, str, int]], prefer_kana: bool) -> Optional[List[str]]:
+    def _best(self, rows: list, prefer_kana: bool, meaning: str) -> Optional[List[str]]:
+        """Elige la entrada correcta cuando hay varias (homófonos).
+
+        Orden: que se escriba en kana (si la palabra está en kana), que su
+        significado se parezca al de tu tarjeta, que sea común y que sea frecuente.
+        """
         if not rows:
             return None
+        wanted = _gloss_words(meaning)
+
         def score(row):
-            kanji, _tags, rank = row
-            common = 2 if rank & 2 else 0
-            kana_ok = 4 if prefer_kana and (rank & 1 or not kanji) else 0
-            return kana_ok + common
-        best = max(rows, key=score)  # max() se queda con el primero en empate (orden de JMdict)
+            kanji, _tags, rank, freq, gloss = row
+            kana_ok = 1 if prefer_kana and (rank & 1 or not kanji) else 0
+            overlap = len(wanted & _gloss_words(gloss)) if wanted else 0
+            return (kana_ok, overlap, 1 if rank & 2 else 0, -freq)
+
+        best = max(rows, key=score)  # en empate se queda el primero (orden de JMdict)
         return best[1].split(",")
 
-    def _lookup(self, word: str, reading: str) -> Optional[List[str]]:
+    _COLS = "kanji, tags, rank, freq, gloss"
+
+    def _lookup(self, word: str, reading: str, meaning: str = "") -> Optional[List[str]]:
         if not word or self.db is None:
             return None
         reading_h = to_hiragana(reading)
         if is_kana_only(word):
             rows = self.db.execute(
-                "select kanji, tags, rank from words where kana_h = ? order by rowid", (to_hiragana(word),)
+                f"select {self._COLS} from words where kana_h = ? order by rowid", (to_hiragana(word),)
             ).fetchall()
-            return self._best(rows, prefer_kana=True)
+            return self._best(rows, True, meaning)
         if reading_h:
             rows = self.db.execute(
-                "select kanji, tags, rank from words where kanji = ? and kana_h = ? order by rowid",
+                f"select {self._COLS} from words where kanji = ? and kana_h = ? order by rowid",
                 (word, reading_h),
             ).fetchall()
-            found = self._best(rows, prefer_kana=False)
+            found = self._best(rows, False, meaning)
             if found:
                 return found
         rows = self.db.execute(
-            "select kanji, tags, rank from words where kanji = ? order by rowid", (word,)
+            f"select {self._COLS} from words where kanji = ? order by rowid", (word,)
         ).fetchall()
-        return self._best(rows, prefer_kana=False)
+        return self._best(rows, False, meaning)
 
-    def classify(self, word: str, reading: str = "") -> List[str]:
-        """Etiquetas de la palabra, en orden de importancia ([] si no se encontró)."""
+    def classify(self, word: str, reading: str = "", meaning: str = "") -> List[str]:
+        """Etiquetas de la palabra, en orden de importancia ([] si no se encontró).
+
+        `meaning` (el significado de tu tarjeta) ayuda a elegir entre palabras
+        que se leen igual, como いくら (幾ら, "cuánto") e いくら (huevas).
+        """
         word = (word or "").strip()
         reading = (reading or "").strip()
-        tags = self._lookup(word, reading)
+        tags = self._lookup(word, reading, meaning)
         if tags:
             return tags
 
@@ -184,14 +208,14 @@ class Classifier:
         for i, cand in enumerate(candidates):
             if not has_japanese(cand):
                 continue
-            tags = self._lookup(cand, readings[i] if i < len(readings) else "")
+            tags = self._lookup(cand, readings[i] if i < len(readings) else "", meaning)
             if tags:
                 return tags
 
         # Verbos escritos con する: "勉強する" -> 勉強 (sustantivo + する)
         if clean.endswith("する") and len(clean) > 2:
             base_reading = clean_reading[:-2] if clean_reading.endswith("する") else clean_reading
-            base = self._lookup(clean[:-2], base_reading)
+            base = self._lookup(clean[:-2], base_reading, meaning)
             if base is not None:
                 # Escrita con する ya es verbo: no la contamos además como sustantivo
                 return ["irregular"] + [t for t in base if t not in ("noun", "suru", "irregular")]

@@ -4,7 +4,7 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
 
 ![Vista previa del panel](docs/vista-previa-claro.png)
 
-<sub>Vista previa con progreso de ejemplo sobre el mazo Kaishi 1.5k. En modo oscuro de Anki se ve así: [docs/vista-previa-oscuro.png](docs/vista-previa-oscuro.png).</sub>
+<sub>Vista previa con progreso de ejemplo sobre el mazo Kaishi 1.5k. También: [modo oscuro](docs/vista-previa-oscuro.png) y [pestaña Diccionario](docs/vista-previa-diccionario.png).</sub>
 
 ## Qué hace
 
@@ -58,7 +58,9 @@ Cada palabra se busca en [JMdict](https://www.edrdg.org/wiki/JMdict-EDICT_Dictio
 
 Una palabra puede tener varias etiquetas: 好き es adjetivo な y también sustantivo, así que cuenta en las dos categorías. Las que no aparecen en JMdict quedan como **Sin categoría**.
 
-El complemento no trae JMdict completo, solo un índice de palabra, lectura y categorías (`anki_diccionario/data/jmdict_pos.tsv.gz`). La primera vez que abres la ventana lo convierte en una base pequeña dentro de `user_files/` para buscar rápido.
+Si dos palabras se leen igual (いくら "cuánto" e いくら "huevas de salmón"), compara el significado de tu tarjeta con el de JMdict para elegir la correcta. La categoría sale del significado principal de cada palabra, para que usos raros (行く como verbo auxiliar) no inflen los números.
+
+El complemento no trae JMdict completo, solo un índice de palabra, lectura y categorías (`anki_diccionario/data/jmdict_pos.tsv.gz`, 4 MB). La primera vez que abres la ventana lo convierte en una base dentro de `user_files/` para buscar rápido (tarda alrededor de un segundo). Con el mazo Kaishi 1.5k clasifica las 1,500 palabras.
 
 ## Estructura
 
@@ -103,7 +105,7 @@ python dev/package.py
 ## Hoja de ruta
 
 - [x] **Parte 1**: leer el mazo, detectar campos y mostrar el progreso
-- [ ] **Parte 2** (en progreso: falta generar el índice desde JMdict): pestañas en la ventana (Progreso siempre es la página principal) y categorías gramaticales automáticas con JMdict (verbos godan/ichidan, adjetivos い/な, sustantivos…), con varias etiquetas por palabra y una sección "Por categoría" en Progreso
+- [x] **Parte 2**: pestañas en la ventana (Progreso siempre es la página principal) y categorías gramaticales automáticas con JMdict (verbos godan/ichidan, adjetivos い/な, sustantivos…), con varias etiquetas por palabra y una sección "Por categoría" en Progreso
 - [ ] **Parte 3**: pestaña Diccionario con todas las palabras, búsqueda (kanji, kana, rōmaji, significado) y filtros por estado, categoría, nivel JLPT y kanji compartido
 - [ ] **Parte 4**: repaso rápido dentro del complemento: eliges "Te cuestan trabajo" o "Estás aprendiendo", cuántas palabras quieres repasar, y se eligen al azar
 - [ ] **Parte 5**: configuración para personalizar el complemento: color de fondo o una imagen propia como fondo

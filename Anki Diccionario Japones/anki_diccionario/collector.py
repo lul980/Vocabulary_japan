@@ -255,7 +255,7 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
     unmatched = 0
     if clf.open():
         for w in words:
-            w["tags"] = clf.classify(w["word"], w["reading"])
+            w["tags"] = clf.classify(w["word"], w["reading"], w["meaning"])
             if not w["tags"]:
                 unmatched += 1
         data["categories"].update({"available": True, "source": clf.source, "unmatched": unmatched})

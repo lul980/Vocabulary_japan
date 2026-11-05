@@ -91,6 +91,8 @@ MINI_INDEX = """#JMdict\t2026-01-01\tEDRDG CC BY-SA 4.0
 食べ物\tたべもの\tnoun\t2
 着る\tきる\tichidan,vt\t2
 切る\tきる\tgodan,vt\t2
+要る\tいる\tgodan,vi\t3\t27\tto be needed; to be necessary
+居る\tいる\tichidan,vi\t3\t60\tto be (of animate objects); to exist; to stay
 """
 
 
@@ -119,6 +121,8 @@ def test_categories() -> bool:
         check("verbo con する", clf.classify("勉強する", "べんきょうする"), ["irregular", "vt"]),
         check("sin lectura", clf.classify("好き"), ["adj_na", "noun"]),
         check("no está", clf.classify("ゾゾゾ", "ぞぞぞ"), []),
+        check("homófono por significado", clf.classify("いる", "いる", "to have, to exist (animate)"), ["ichidan", "vi"]),
+        check("homófono sin significado", clf.classify("いる", "いる"), ["godan", "vi"]),
         check("grupos", groups_for(["adj_na", "noun", "vt"]), ["adjective", "noun"]),
         check("grupos verbo", groups_for(["godan", "vt", "suru"]), ["verb", "noun"]),
     ])
