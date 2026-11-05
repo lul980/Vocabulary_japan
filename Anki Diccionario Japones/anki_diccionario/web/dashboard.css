@@ -85,11 +85,33 @@ body.nightMode,
   letter-spacing: 0;
 }
 
-.adic button, .adic select { font: inherit; color: inherit; }
+/* Anki le pone estilo a TODOS los botones de sus páginas: margen de 4px a
+   los lados, degradado gris al pasar el cursor, sombra y bordes redondeados
+   propios. Aquí se neutraliza para que cada botón use el diseño del panel.
+   Por eso las reglas de botones de este archivo empiezan con .adic (más
+   específicas que las de Anki). */
+.adic button {
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  font: inherit;
+  color: inherit;
+  box-shadow: none;
+}
+
+.adic button:hover,
+.adic button:active { box-shadow: none; }
+
+.adic select { font: inherit; color: inherit; margin: 0; }
 
 .adic :focus-visible {
   outline: 2px solid var(--focus);
   outline-offset: 2px;
+}
+
+/* Anki quita el contorno de los botones con !important: usamos un anillo */
+.adic button:focus-visible {
+  box-shadow: 0 0 0 2px var(--paper), 0 0 0 4px var(--focus);
 }
 
 .sr-only {
@@ -149,8 +171,8 @@ body.nightMode,
   align-items: center;
 }
 
-.deck-picker select,
-.cover-button {
+.adic .deck-picker select,
+.adic .cover-button {
   height: 32px;
   border-radius: 6px;
   border: 1px solid rgba(255, 255, 255, .32);
@@ -160,10 +182,23 @@ body.nightMode,
   cursor: pointer;
 }
 
-.deck-picker select { max-width: 280px; padding-right: 8px; }
+.adic .deck-picker select { max-width: 280px; padding-right: 8px; }
 .deck-picker option { color: #18233a; background: #fff; }
-.cover-button:hover, .deck-picker select:hover { background: rgba(255, 255, 255, .16); }
-.cover-button[disabled] { opacity: .55; cursor: default; }
+.adic .cover-button:hover,
+.adic .cover-button:active,
+.adic .deck-picker select:hover {
+  background: rgba(255, 255, 255, .16);
+  border: 1px solid rgba(255, 255, 255, .5);
+  color: var(--cover-ink);
+}
+.adic .cover-button[disabled],
+.adic .cover-button[disabled]:hover {
+  opacity: .55;
+  cursor: default;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .32);
+  color: var(--cover-ink);
+}
 
 /* ---------- Pestañas ---------- */
 
@@ -180,10 +215,16 @@ body.nightMode,
   gap: 28px;
 }
 
-.tabs button {
-  position: relative;
+.adic .tabs button,
+.adic .tabs button:hover,
+.adic .tabs button:active {
   border: 0;
+  border-radius: 0;
   background: transparent;
+}
+
+.adic .tabs button {
+  position: relative;
   padding: 14px 0 12px;
   font-size: 14px;
   font-weight: 600;
@@ -191,11 +232,11 @@ body.nightMode,
   cursor: pointer;
 }
 
-.tabs button:hover { color: var(--ink-2); }
+.adic .tabs button:hover { color: var(--ink-2); }
 
-.tabs button[aria-selected="true"] { color: var(--ink); }
+.adic .tabs button[aria-selected="true"] { color: var(--ink); }
 
-.tabs button[aria-selected="true"]::after {
+.adic .tabs button[aria-selected="true"]::after {
   content: "";
   position: absolute;
   left: 0; right: 0; bottom: -1px;
@@ -345,9 +386,14 @@ body.nightMode,
   background: var(--st-new);
 }
 
-.toggle button {
+.adic .toggle button,
+.adic .toggle button:hover,
+.adic .toggle button:active {
   border: 0;
   background: transparent;
+}
+
+.adic .toggle button {
   padding: 4px 12px;
   border-radius: 5px;
   font-size: 13px;
@@ -355,7 +401,10 @@ body.nightMode,
   cursor: pointer;
 }
 
-.toggle button[aria-pressed="true"] {
+.adic .toggle button:hover { color: var(--ink); }
+
+.adic .toggle button[aria-pressed="true"],
+.adic .toggle button[aria-pressed="true"]:hover {
   background: var(--sheet);
   color: var(--ink);
   box-shadow: 0 1px 2px rgba(24, 35, 58, .12);
@@ -420,7 +469,7 @@ body.nightMode,
 .cats { margin-top: 32px; }
 
 /* Tira plegable: cerrada muestra un resumen, al picarle se despliega */
-.cats-toggle {
+.adic .cats-toggle {
   display: flex;
   align-items: center;
   gap: 20px;
@@ -433,7 +482,21 @@ body.nightMode,
   cursor: pointer;
 }
 
-.cats-toggle:hover { border-color: var(--st-learning); }
+/* Al pasar el cursor se resalta TODA la tarjeta (tira + lista abierta):
+   borde índigo y el texto "Ver todas" en índigo, sin fondo gris. */
+.adic .cats-toggle:hover,
+.adic .cats-toggle:active {
+  background: var(--sheet);
+  border: 1px solid var(--st-young);
+}
+
+.cats:has(.cats-toggle:hover) .cats-panel { border-color: var(--st-young); }
+
+.adic .cats-toggle:hover .cats-action,
+.adic .cats-toggle:hover .chev { color: var(--st-mature); }
+
+.cats.is-open .cats-toggle,
+.cats.is-open .cats-toggle:hover { border-bottom-color: var(--rule); }
 
 .cats-title {
   flex: none;

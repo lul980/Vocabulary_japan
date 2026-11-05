@@ -8,7 +8,7 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
 
 ## Qué hace
 
-- Agrega **Diccionario** a la barra de arriba de Anki (junto a Estadísticas) y a **Herramientas**.
+- Se abre con un clic desde **Diccionario** en la barra de menús (junto a Herramientas, Ayuda y otros complementos), desde el botón **Diccionario** junto a Estadísticas o desde **Herramientas › Diccionario japonés**.
 - La ventana tiene pestañas: **Progreso** es la página principal y siempre abre primero; **Diccionario** tendrá la lista completa de tus palabras (en construcción).
 - Cuenta tus palabras por estado: sabidas, jóvenes, aprendiendo, pendientes y suspendidas, y marca las difíciles.
 - Dibuja tu mazo completo como un mapa: cada cuadro es una palabra y se tiñe de índigo más oscuro conforme la aprendes. Al pasar el cursor ves la palabra, su lectura, su significado y su intervalo.
@@ -21,7 +21,7 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
 
 1. Descarga [`dist/anki_diccionario_japones.ankiaddon`](dist/anki_diccionario_japones.ankiaddon).
 2. En Anki: **Herramientas › Complementos › Instalar desde archivo…** y elige el archivo. También puedes darle doble clic.
-3. Reinicia Anki y pulsa **Diccionario** en la barra de arriba.
+3. Reinicia Anki y pulsa **Diccionario** en la barra de menús.
 
 Requiere Anki 2.1.50 o más reciente.
 
@@ -92,7 +92,8 @@ python dev/test_collector.py ruta/a/tu_mazo.apkg --json datos.json
 python dev/make_demo_progress.py collection.anki21 demo.anki21
 
 # Página de vista previa para abrir en el navegador
-python dev/build_preview.py datos.json vista.html
+# (--anki carga antes los estilos globales de Anki, para verla como dentro de la app)
+python dev/build_preview.py datos.json vista.html --anki
 
 # Regenerar el índice de categorías desde el JMdict oficial
 # (descárgalo de http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz)

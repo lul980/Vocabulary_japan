@@ -181,6 +181,14 @@ def _add_toolbar_link(links: list, toolbar: Any) -> None:
 def setup() -> None:
     mw.addonManager.setWebExports(__name__, WEB_EXPORTS)
 
+    # Botón directo en la barra de menús (junto a Migaku, AnKing...): un solo clic.
+    # Es una acción sin submenú, así que al picarle abre la ventana de una vez.
+    top = QAction(labels()["toolbar"], mw)
+    top.setToolTip(labels()["tip"])
+    qconnect(top.triggered, open_dashboard)
+    mw.form.menubar.addAction(top)
+
+    # También en Herramientas (en Mac la barra de menús no muestra acciones sueltas)
     action = QAction(labels()["menu"], mw)
     qconnect(action.triggered, open_dashboard)
     mw.form.menuTools.addAction(action)
