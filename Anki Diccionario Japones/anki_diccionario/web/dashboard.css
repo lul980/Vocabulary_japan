@@ -417,16 +417,97 @@ body.nightMode,
 
 /* ---------- Por categoría ---------- */
 
-.cats {
-  margin-top: 32px;
-  padding-top: 24px;
-  border-top: 1px solid var(--rule);
+.cats { margin-top: 32px; }
+
+/* Tira plegable: cerrada muestra un resumen, al picarle se despliega */
+.cats-toggle {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  padding: 14px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--sheet);
+  text-align: left;
+  cursor: pointer;
+}
+
+.cats-toggle:hover { border-color: var(--st-learning); }
+
+.cats-title {
+  flex: none;
+  font-size: 15px;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.cats-summary {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  gap: 18px;
+  overflow: hidden;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 400;
+  color: var(--ink-2);
+}
+
+.cats-summary b { color: var(--ink); font-weight: 600; font-variant-numeric: tabular-nums; }
+
+.cats-action {
+  flex: none;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+
+.cats-toggle .chev {
+  flex: none;
+  color: var(--ink-2);
+  transition: transform .2s ease;
+}
+
+.cats.is-open .cats-toggle {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+}
+
+.cats.is-open .chev { transform: rotate(180deg); }
+
+.cats-body {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows .25s ease;
+}
+
+.cats.is-open .cats-body { grid-template-rows: 1fr; }
+
+.cats-inner {
+  overflow: hidden;
+  min-height: 0;
+  visibility: hidden;
+  transition: visibility 0s linear .25s;
+}
+
+.cats.is-open .cats-inner {
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.cats-panel {
+  padding: 16px 18px 18px;
+  border: 1px solid var(--rule);
+  border-top: 0;
+  border-radius: 0 0 10px 10px;
+  background: var(--sheet);
 }
 
 .cat-list {
   list-style: none;
   padding: 0;
-  margin-top: 16px;
+  margin-top: 12px;
 }
 
 .cat {
@@ -678,6 +759,8 @@ body.nightMode,
   .section-head { flex-direction: column; align-items: flex-start; }
   .rhythm-body, .lists { grid-template-columns: 1fr; gap: 24px; }
   .tabs-inner { padding: 0 16px; }
+  .cats-summary { display: none; }
+  .cats-toggle { justify-content: space-between; }
   .cat { grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; }
   .cat .segbar { grid-column: 1 / 3; grid-row: 2; }
   .cat-subs { grid-column: 1 / 3; }

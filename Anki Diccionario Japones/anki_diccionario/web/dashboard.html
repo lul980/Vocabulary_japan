@@ -57,10 +57,23 @@
       </section>
 
       <section class="cats" id="cats" hidden>
-        <h2 data-i18n="catsTitle">Por categoría</h2>
-        <p class="section-sub" id="cats-sub"></p>
-        <ul class="cat-list" id="cat-list"></ul>
-        <p class="note" id="cats-note"></p>
+        <h2 class="cats-heading">
+          <button type="button" class="cats-toggle" id="cats-toggle" aria-expanded="false" aria-controls="cats-body">
+            <span class="cats-title" data-i18n="catsTitle">Por categoría</span>
+            <span class="cats-summary" id="cats-summary"></span>
+            <span class="cats-action" id="cats-action" data-i18n="catsShow">Ver todas</span>
+            <svg class="chev" viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><path d="M4 6l4 4 4-4" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+        </h2>
+        <div class="cats-body" id="cats-body">
+          <div class="cats-inner">
+            <div class="cats-panel">
+              <p class="section-sub" id="cats-sub"></p>
+              <ul class="cat-list" id="cat-list"></ul>
+              <p class="note" id="cats-note"></p>
+            </div>
+          </div>
+        </div>
       </section>
 
       <div id="lower" hidden>

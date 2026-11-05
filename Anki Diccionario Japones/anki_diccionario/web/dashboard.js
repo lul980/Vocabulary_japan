@@ -21,6 +21,8 @@
       tabDictionary: "Diccionario",
       catsTitle: "Por categoría",
       catsSub: "Cuántas sabes de cada tipo de palabra.",
+      catsShow: "Ver todas",
+      catsHide: "Ocultar",
       catsNote: (src) => `Una palabra puede estar en varias categorías: 好き es adjetivo な y también sustantivo. Categorías de ${src} (© EDRDG, CC BY-SA 4.0).`,
       catsUnavailable: "No se encontró el diccionario de categorías. Vuelve a instalar el complemento.",
       countOf: (k, n) => `<b>${k}</b> de ${n}`,
@@ -104,6 +106,8 @@
       tabDictionary: "Dictionary",
       catsTitle: "By category",
       catsSub: "How many you know of each kind of word.",
+      catsShow: "Show all",
+      catsHide: "Hide",
       catsNote: (src) => `A word can belong to several categories: 好き is a な-adjective and also a noun. Categories from ${src} (© EDRDG, CC BY-SA 4.0).`,
       catsUnavailable: "The category dictionary is missing. Reinstall the add-on.",
       countOf: (k, n) => `<b>${k}</b> of ${n}`,
@@ -570,6 +574,7 @@
     if (!cats.available) {
       list.innerHTML = "";
       $("cats-note").textContent = t.catsUnavailable;
+      $("cats-summary").textContent = "";
       return;
     }
     const groups = cats.groups || {};
@@ -616,6 +621,19 @@
         </li>`;
     }).join("");
     $("cats-note").textContent = t.catsNote(cats.source || "JMdict");
+
+    // Resumen de la tira cerrada: las 3 categorías más grandes
+    $("cats-summary").innerHTML = order.filter((g) => g !== "none").slice(0, 3).map((g) => {
+      const st = stats[g];
+      return `<span>${esc((t.groups[g] || [g])[0])} ${t.countOf(fmt(st.mature), fmt(st.total - st.suspended))}</span>`;
+    }).join("");
+    setCatsOpen($("cats").classList.contains("is-open"));
+  }
+
+  function setCatsOpen(open) {
+    $("cats").classList.toggle("is-open", open);
+    $("cats-toggle").setAttribute("aria-expanded", String(open));
+    $("cats-action").textContent = open ? t.catsHide : t.catsShow;
   }
 
   function chipsHtml(tags) {
@@ -878,6 +896,7 @@
     applyI18n();
     wireGrid();
     wireTabs();
+    $("cats-toggle").addEventListener("click", () => setCatsOpen(!$("cats").classList.contains("is-open")));
     $("refresh").addEventListener("click", () => { setLoading(); send("adic:refresh"); });
     $("deck-select").addEventListener("change", (ev) => { setLoading(); send("adic:deck:" + ev.target.value); });
     window.addEventListener("resize", onResize);

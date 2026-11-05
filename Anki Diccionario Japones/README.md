@@ -12,7 +12,7 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
 - La ventana tiene pestañas: **Progreso** es la página principal y siempre abre primero; **Diccionario** tendrá la lista completa de tus palabras (en construcción).
 - Cuenta tus palabras por estado: sabidas, jóvenes, aprendiendo, pendientes y suspendidas, y marca las difíciles.
 - Dibuja tu mazo completo como un mapa: cada cuadro es una palabra y se tiñe de índigo más oscuro conforme la aprendes. Al pasar el cursor ves la palabra, su lectura, su significado y su intervalo.
-- Clasifica cada palabra por categoría gramatical con JMdict (verbos godan, ichidan e irregulares, sustantivos, adjetivos い y な, adverbios, partículas…) y te dice cuántas sabes de cada una.
+- Clasifica cada palabra por categoría gramatical con JMdict (verbos godan, ichidan e irregulares, sustantivos, adjetivos い y な, adverbios, partículas…) y te dice cuántas sabes de cada una. La sección **Por categoría** aparece como una tira con tus tres categorías más grandes; al picarle se despliega completa.
 - Muestra cuántas palabras nuevas empiezas por semana y calcula en cuánto tiempo terminarías el mazo a tu ritmo.
 - Lista las palabras que acabas de aprender y las que más te cuestan.
 - Se adapta al modo claro u oscuro de Anki, y al español o inglés.
