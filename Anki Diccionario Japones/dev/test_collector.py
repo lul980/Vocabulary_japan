@@ -102,7 +102,7 @@ def mini_classifier() -> Classifier:
     gz = os.path.join(tmp, "mini.tsv.gz")
     with gzip.open(gz, "wt", encoding="utf-8") as fh:
         fh.write(MINI_INDEX)
-    return Classifier(gz, os.path.join(tmp, "cache.sqlite"))
+    return Classifier(gz, os.path.join(tmp, "cache"))
 
 
 def test_categories() -> bool:
@@ -125,6 +125,62 @@ def test_categories() -> bool:
         check("homófono sin significado", clf.classify("いる", "いる"), ["godan", "vi"]),
         check("grupos", groups_for(["adj_na", "noun", "vt"]), ["adjective", "noun"]),
         check("grupos verbo", groups_for(["godan", "vt", "suru"]), ["verb", "noun"]),
+    ])
+
+
+def open_files_in(folder: str) -> list:
+    """Archivos de `folder` que este proceso tiene abiertos (solo Linux)."""
+    fd_dir = "/proc/self/fd"
+    if not os.path.isdir(fd_dir):
+        return []
+    folder = os.path.realpath(folder)
+    found = []
+    for fd in os.listdir(fd_dir):
+        try:
+            target = os.readlink(os.path.join(fd_dir, fd))
+        except OSError:
+            continue
+        if target.startswith(folder):
+            found.append(target)
+    return found
+
+
+def test_cache_released() -> bool:
+    """Reproduce el error de Windows al actualizar: user_files no debe quedar abierto."""
+    print("Caché liberada al terminar (para poder actualizar en Windows)")
+    clf = mini_classifier()
+    os.makedirs(clf.cache_dir, exist_ok=True)
+    old = os.path.join(clf.cache_dir, "jmdict_pos.sqlite")  # caché de la versión anterior
+    open(old, "w").close()
+    col_dir = tempfile.mkdtemp(prefix="adic-col-")
+    import sqlite3
+    db = sqlite3.connect(os.path.join(col_dir, "c.anki21"))
+    db.executescript("""
+        create table col (models text, decks text, conf text);
+        create table notes (id int, mid int, flds text, tags text, sfld text);
+        create table cards (id int, nid int, did int, odid int, ord int, type int, queue int, ivl int, lapses int, reps int, due int);
+        create table revlog (id int, cid int, usn int, ease int, ivl int, lastIvl int, factor int, time int, type int);
+    """)
+    import json as _json
+    db.execute("insert into col values (?,?,?)", (
+        _json.dumps({"1": {"name": "Básico", "flds": [{"name": "Word"}, {"name": "Word Reading"}, {"name": "Word Meaning"}], "sortf": 0}}),
+        _json.dumps({"5": {"name": "Japonés"}}), _json.dumps({"curDeck": 5})))
+    db.execute("insert into notes values (10, 1, ?, '', '私')", ("私\x1fわたし\x1fI",))
+    db.execute("insert into cards values (100, 10, 5, 0, 0, 0, 0, 0, 0, 0, 1)")
+    db.commit()
+    db.close()
+    col = FakeCollection(os.path.join(col_dir, "c.anki21"))
+    data = build_dashboard_data(col, 5, {}, classifier=clf)
+    data = build_dashboard_data(col, 5, {}, classifier=clf)  # "Actualizar"
+    still_open = open_files_in(clf.cache_dir)
+    backup = clf.cache_dir + "_backup"
+    os.rename(clf.cache_dir, backup)  # lo mismo que hace Anki al actualizar
+    os.rename(backup, clf.cache_dir)
+    return all([
+        check("clasificó", data["words"][0]["tags"], ["pronoun", "noun"]),
+        check("base cerrada", clf.db, None),
+        check("archivos abiertos en user_files", still_open, []),
+        check("caché vieja borrada", os.path.exists(old), False),
     ])
 
 
@@ -157,7 +213,7 @@ def test_deck(path: str, json_out: str = "") -> None:
 
 
 if __name__ == "__main__":
-    ok = test_fields() & test_categories()
+    ok = test_fields() & test_categories() & test_cache_released()
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     json_out = ""
     if "--json" in sys.argv:

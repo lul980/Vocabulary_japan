@@ -22,7 +22,7 @@ from .fields import has_japanese, is_kana_only
 
 ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
 INDEX_GZ = os.path.join(ADDON_DIR, "data", "jmdict_pos.tsv.gz")
-CACHE_DB = os.path.join(ADDON_DIR, "user_files", "jmdict_pos.sqlite")
+CACHE_DIR = os.path.join(ADDON_DIR, "user_files")
 
 # Grupos que se muestran en el panel y las etiquetas que caen en cada uno
 GROUPS: Dict[str, Tuple[str, ...]] = {
@@ -69,9 +69,9 @@ def _cleanup(text: str) -> str:
 class Classifier:
     """Busca palabras en el índice de JMdict."""
 
-    def __init__(self, index_gz: str = INDEX_GZ, cache_db: str = CACHE_DB):
+    def __init__(self, index_gz: str = INDEX_GZ, cache_dir: str = CACHE_DIR):
         self.index_gz = index_gz
-        self.cache_db = cache_db
+        self.cache_dir = cache_dir
         self.source = ""
         self.db: Optional[sqlite3.Connection] = None
 
@@ -80,63 +80,83 @@ class Classifier:
         return os.path.exists(self.index_gz)
 
     # ---------- base de datos ----------
+    #
+    # Importante en Windows: un archivo abierto no se puede mover ni borrar, y
+    # Anki mueve user_files/ al actualizar el complemento. Por eso la base se
+    # abre solo mientras se lee el mazo (collector.py llama a close() al
+    # terminar) y cada versión del índice usa su propio archivo, así nunca hay
+    # que sobrescribir uno que otro programa tenga abierto.
 
     def _stamp(self) -> str:
         st = os.stat(self.index_gz)
         return f"{st.st_size}-{int(st.st_mtime)}"
+
+    def _cache_path(self, stamp: str) -> str:
+        return os.path.join(self.cache_dir, f"jmdict_pos-{stamp}.sqlite")
 
     def open(self) -> bool:
         if self.db is not None:
             return True
         if not self.available:
             return False
-        stamp = self._stamp()
-        if os.path.exists(self.cache_db):
+        path = self._cache_path(self._stamp())
+        if os.path.exists(path):
+            db = None
             try:
-                db = sqlite3.connect(self.cache_db, check_same_thread=False)
-                row = db.execute("select value from meta where key='stamp'").fetchone()
-                if row and row[0] == stamp:
-                    self.db = db
-                    self.source = db.execute("select value from meta where key='source'").fetchone()[0]
-                    return True
-                db.close()
-            except sqlite3.Error:
-                pass
-            os.remove(self.cache_db)
-        self._build_cache(stamp)
+                db = sqlite3.connect(path, check_same_thread=False)
+                self.source = db.execute("select value from meta where key='source'").fetchone()[0]
+                self.db = db
+                return True
+            except (sqlite3.Error, TypeError):
+                if db is not None:
+                    db.close()
+                _try_remove(path)
+        self._build_cache(path)
+        self._remove_old_caches(keep=path)
         return self.db is not None
 
-    def _build_cache(self, stamp: str) -> None:
-        os.makedirs(os.path.dirname(self.cache_db), exist_ok=True)
-        tmp = self.cache_db + ".tmp"
-        if os.path.exists(tmp):
-            os.remove(tmp)
+    def _build_cache(self, path: str) -> None:
+        os.makedirs(self.cache_dir, exist_ok=True)
+        tmp = f"{path}.{os.getpid()}.tmp"
+        _try_remove(tmp)
         db = sqlite3.connect(tmp)
-        db.execute("create table words (kanji text, kana_h text, tags text, rank int, freq int, gloss text)")
-        db.execute("create table meta (key text primary key, value text)")
-        source = "JMdict"
-        rows = []
-        with gzip.open(self.index_gz, "rt", encoding="utf-8") as fh:
-            for line in fh:
-                parts = line.rstrip("\n").split("\t")
-                if parts[0] == "#JMdict":
-                    source = f"JMdict {parts[1]}".strip()
-                    continue
-                if len(parts) < 4:
-                    continue
-                kanji, kana, tags, rank = parts[:4]
-                freq = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else 99
-                gloss = parts[5] if len(parts) > 5 else ""
-                rows.append((kanji, to_hiragana(kana), tags, int(rank), freq, gloss))
-        db.executemany("insert into words values (?,?,?,?,?,?)", rows)
-        db.execute("create index idx_kanji on words(kanji)")
-        db.execute("create index idx_kana on words(kana_h)")
-        db.executemany("insert into meta values (?,?)", [("stamp", stamp), ("source", source)])
-        db.commit()
-        db.close()
-        os.replace(tmp, self.cache_db)
-        self.db = sqlite3.connect(self.cache_db, check_same_thread=False)
+        try:
+            db.execute("create table words (kanji text, kana_h text, tags text, rank int, freq int, gloss text)")
+            db.execute("create table meta (key text primary key, value text)")
+            source = "JMdict"
+            rows = []
+            with gzip.open(self.index_gz, "rt", encoding="utf-8") as fh:
+                for line in fh:
+                    parts = line.rstrip("\n").split("\t")
+                    if parts[0] == "#JMdict":
+                        source = f"JMdict {parts[1]}".strip()
+                        continue
+                    if len(parts) < 4:
+                        continue
+                    kanji, kana, tags, rank = parts[:4]
+                    freq = int(parts[4]) if len(parts) > 4 and parts[4].isdigit() else 99
+                    gloss = parts[5] if len(parts) > 5 else ""
+                    rows.append((kanji, to_hiragana(kana), tags, int(rank), freq, gloss))
+            db.executemany("insert into words values (?,?,?,?,?,?)", rows)
+            db.execute("create index idx_kanji on words(kanji)")
+            db.execute("create index idx_kana on words(kana_h)")
+            db.execute("insert into meta values ('source', ?)", (source,))
+            db.commit()
+        finally:
+            db.close()
+        os.replace(tmp, path)
+        self.db = sqlite3.connect(path, check_same_thread=False)
         self.source = source
+
+    def _remove_old_caches(self, keep: str) -> None:
+        try:
+            names = os.listdir(self.cache_dir)
+        except OSError:
+            return
+        for name in names:
+            full = os.path.join(self.cache_dir, name)
+            if name.startswith("jmdict_pos") and full != keep:
+                _try_remove(full)  # si está en uso, se borra la próxima vez
 
     def close(self) -> None:
         if self.db is not None:
@@ -222,6 +242,14 @@ class Classifier:
         return []
 
 
+def _try_remove(path: str) -> None:
+    try:
+        if os.path.exists(path):
+            os.remove(path)
+    except OSError:
+        pass
+
+
 def groups_for(tags: List[str]) -> List[str]:
     """Grupos del panel (verbo, sustantivo...) en el orden de las etiquetas."""
     out: List[str] = []
@@ -236,7 +264,7 @@ _shared: Optional[Classifier] = None
 
 
 def shared_classifier() -> Classifier:
-    """Una sola instancia por sesión de Anki (la base se abre una vez)."""
+    """Una sola instancia por sesión de Anki. Ojo: hay que cerrarla después de usarla."""
     global _shared
     if _shared is None:
         _shared = Classifier()
