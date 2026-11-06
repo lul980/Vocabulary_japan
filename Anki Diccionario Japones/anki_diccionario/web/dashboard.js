@@ -48,9 +48,10 @@
       },
       tipType: "Tipo",
       noType: "sin categoría",
-      soonTitle: "Tu diccionario llega en la siguiente versión",
-      soonBody: "Aquí vas a poder ver todas tus palabras, buscarlas por kanji, lectura o significado, y filtrarlas por categoría, estado y nivel JLPT. Así se verán tus palabras con sus categorías:",
+      seeAll: "Ver todas",
+      seeInDict: (name) => `Ver ${name} en el diccionario`,
       sourceCats: (src) => `Categorías gramaticales: ${src}, © EDRDG, licencia CC BY-SA 4.0.`,
+      sourceJlpt: "Niveles JLPT: open-anki-jlpt-decks, © Jamie Sinclair, licencia MIT. Desde 2010 no hay listas oficiales; el nivel es una guía.",
       sourceUnmatched: (n) => `${n} ${plural(n, "palabra no aparece", "palabras no aparecen")} en JMdict y ${plural(n, "queda", "quedan")} como “Sin categoría”.`,
       title: "Diccionario japonés",
       subtitle: "Tu progreso con el vocabulario de Anki",
@@ -67,7 +68,7 @@
       leechLabel: "difíciles",
       definition: (d) => `Sabida: su intervalo ya llega a ${d} días o más. Joven: ya la repasas, pero con menos de ${d} días.`,
       mapTitle: "Tu mazo, palabra por palabra",
-      mapSub: (n) => `Cada cuadro es una de tus ${n} palabras. Pasa el cursor para verla.`,
+      mapSub: (n) => `Cada cuadro es una de tus ${n} palabras. Pasa el cursor para verla y haz clic para abrirla en el diccionario.`,
       orderDeck: "Orden del mazo",
       orderStatus: "Por estado",
       mapAria: (n, k) => `Mapa de ${n} palabras; ${k} sabidas.`,
@@ -133,9 +134,10 @@
       },
       tipType: "Type",
       noType: "uncategorized",
-      soonTitle: "Your dictionary arrives in the next version",
-      soonBody: "Here you'll see all your words, search them by kanji, reading or meaning, and filter by category, status and JLPT level. This is how your words will look with their categories:",
+      seeAll: "See all",
+      seeInDict: (name) => `See ${name} in the dictionary`,
       sourceCats: (src) => `Grammatical categories: ${src}, © EDRDG, CC BY-SA 4.0 license.`,
+      sourceJlpt: "JLPT levels: open-anki-jlpt-decks, © Jamie Sinclair, MIT license. There are no official lists since 2010; levels are a guide.",
       sourceUnmatched: (n) => `${n} ${plural(n, "word isn't", "words aren't")} in JMdict and ${plural(n, "shows", "show")} as “Uncategorized”.`,
       title: "Japanese dictionary",
       subtitle: "Your progress with your Anki vocabulary",
@@ -152,7 +154,7 @@
       leechLabel: "difficult",
       definition: (d) => `Known: its interval has reached ${d} days or more. Young: in review, but under ${d} days.`,
       mapTitle: "Your deck, word by word",
-      mapSub: (n) => `Each square is one of your ${n} words. Hover to see it.`,
+      mapSub: (n) => `Each square is one of your ${n} words. Hover to see it, click to open it in the dictionary.`,
       orderDeck: "Deck order",
       orderStatus: "By status",
       mapAria: (n, k) => `Map of ${n} words; ${k} known.`,
@@ -196,6 +198,7 @@
   let focusIndex = -1;
   let animFrame = 0;
   let activeTab = "progress";
+  let dict = null; // pestaña Diccionario (dictionary.js)
 
   const $ = (id) => document.getElementById(id);
   const send = (cmd) => { if (typeof window.pycmd === "function") window.pycmd(cmd); };
@@ -610,11 +613,11 @@
         `<span style="flex:${st[s]};background:var(${STATUS_VAR[s]})" title="${esc(t.status[s])}: ${fmt(st[s])}"></span>`
       ).join("");
       const subs = (groups[g] || []).filter((tag) => st.subs[tag]).map((tag) =>
-        `<span>${esc(t.subs[tag])} ${t.countOf(fmt(st.subs[tag].mature), fmt(st.subs[tag].total))}</span>`
+        `<span><button type="button" class="cat-link" data-cat="t:${tag}" title="${esc(t.seeInDict(t.subs[tag]))}">${esc(t.subs[tag])}</button> ${t.countOf(fmt(st.subs[tag].mature), fmt(st.subs[tag].total))}</span>`
       ).join("");
       const label = `${name}: ${STATUS.map((s) => `${t.status[s]} ${fmt(st[s])}`).join(", ")}`;
       return `<li class="cat${g === "none" ? " is-none" : ""}">
-          <div class="cat-name"><strong>${esc(name)}</strong>${jp ? `<span class="jp" lang="ja">${jp}</span>` : ""}</div>
+          <div class="cat-name"><button type="button" class="cat-link is-main" data-cat="g:${g}" title="${esc(t.seeInDict(name.toLowerCase()))}">${esc(name)}</button>${jp ? `<span class="jp" lang="ja">${jp}</span>` : ""}</div>
           <div class="segbar" role="img" aria-label="${esc(label)}">${segs || `<span class="rest" style="flex:1"></span>`}</div>
           <div class="cat-count">${t.countOf(fmt(st.mature), fmt(active))}</div>
           ${subs ? `<div class="cat-subs">${subs}</div>` : ""}
@@ -640,22 +643,6 @@
     const labels = tagLabels(tags);
     if (!labels.length) return `<span class="chips"><span class="chip">${esc(t.noType)}</span></span>`;
     return `<span class="chips">${labels.map((l, i) => `<span class="chip${i === 0 ? " is-primary" : ""}">${esc(l)}</span>`).join("")}</span>`;
-  }
-
-  // Vista previa en la pestaña Diccionario: palabras variadas con sus etiquetas
-  function renderSoon() {
-    const seen = new Set();
-    const picks = [];
-    for (const w of model.words) {
-      const key = (w.tags || [])[0] || "none";
-      if (seen.has(key) || !(w.tags || []).length) continue;
-      seen.add(key);
-      picks.push(w);
-      if (picks.length >= 8) break;
-    }
-    $("soon-preview").innerHTML = picks.map((w) =>
-      `<li><span class="w" lang="ja">${ruby(w.word, w.reading)}</span><span class="m">${esc(w.meaning)}</span>${chipsHtml(w.tags)}</li>`
-    ).join("");
   }
 
   // ------------------------------------------------------------------
@@ -836,6 +823,7 @@
       if (cats.unmatched) html += `<p>${esc(t.sourceUnmatched(fmt(cats.unmatched)))}</p>`;
       html += `<p>${esc(t.sourceCats(cats.source || "JMdict"))}</p>`;
     }
+    if (data.jlpt && data.jlpt.available) html += `<p>${esc(t.sourceJlpt)}</p>`;
     html += `<p>${esc(t.howToChange)}</p>`;
     if (data.generated_at) {
       html += `<p>${esc(t.updated(new Intl.DateTimeFormat(locale(), { hour: "numeric", minute: "2-digit" }).format(new Date(data.generated_at))))}</p>`;
@@ -849,6 +837,7 @@
   // ------------------------------------------------------------------
 
   function render(data) {
+    init();
     lang = pickLanguage(data.language);
     t = I18N[lang];
     applyI18n();
@@ -866,6 +855,7 @@
     }
     if (!model.total) {
       showEmpty(t.noWordsTitle, t.noWordsBody);
+      if (dict) dict.render(model);
       renderSource();
       $("source").querySelector("details").open = true;
       return;
@@ -878,7 +868,7 @@
     renderCategories();
     renderWeeks();
     renderLists();
-    renderSoon();
+    if (dict) dict.render(model);
     renderSource();
   }
 
@@ -892,10 +882,37 @@
     }, 80);
   }
 
+  let initialized = false;
+
+  // Se puede llamar varias veces: la primera vez conecta todo. render() la
+  // llama por si los datos llegan antes de que la página termine de cargar.
   function init() {
+    if (initialized) return;
+    initialized = true;
     applyI18n();
     wireGrid();
     wireTabs();
+    if (window.AdicDictionary) {
+      dict = window.AdicDictionary({
+        $, esc, fmt, fmtDate, ruby, send, STATUS_VAR, tagLabels, showTab,
+        lang: () => lang,
+        t: () => t,
+      });
+    }
+    const openDict = (filters) => { if (dict && model) dict.open(filters); };
+    $("cat-list").addEventListener("click", (ev) => {
+      const link = ev.target.closest(".cat-link");
+      if (link) openDict({ cat: link.dataset.cat === "g:none" ? "g:none" : link.dataset.cat });
+    });
+    $("see-recent").addEventListener("click", () => openDict({ status: "mature", sort: "recent" }));
+    $("see-hard").addEventListener("click", () => openDict({ sort: "lapses" }));
+    $("grid").addEventListener("click", (ev) => {
+      const i = indexFromEvent(ev);
+      if (grid && i >= 0) openDict({ q: grid.items[i].word });
+    });
+    $("grid").addEventListener("keydown", (ev) => {
+      if (ev.key === "Enter" && grid && focusIndex >= 0) openDict({ q: grid.items[focusIndex].word });
+    });
     $("cats-toggle").addEventListener("click", () => setCatsOpen(!$("cats").classList.contains("is-open")));
     $("refresh").addEventListener("click", () => { setLoading(); send("adic:refresh"); });
     $("deck-select").addEventListener("change", (ev) => { setLoading(); send("adic:deck:" + ev.target.value); });
@@ -903,7 +920,7 @@
     // Los datos los manda Python con AnkiDiccionario.render(...) cuando la página está lista
   }
 
-  window.AnkiDiccionario = { render, setLoading };
+  window.AnkiDiccionario = { render, setLoading, openDictionary: (f) => dict && dict.open(f) };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

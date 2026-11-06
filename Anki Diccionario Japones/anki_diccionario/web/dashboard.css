@@ -76,6 +76,9 @@ body.nightMode,
 
 .adic *, .adic *::before, .adic *::after { box-sizing: border-box; }
 
+/* Lo oculto siempre se oculta, aunque una clase le ponga display */
+.adic [hidden] { display: none !important; }
+
 /* :where() deja la especificidad baja para que los márgenes de cada sección ganen */
 .adic :where(h1, h2, p, ol, ul) { margin: 0; }
 
@@ -415,7 +418,7 @@ body.nightMode,
 #grid {
   display: block;
   width: 100%;
-  cursor: crosshair;
+  cursor: pointer;
   border-radius: 2px;
 }
 
@@ -614,7 +617,6 @@ body.nightMode,
 }
 
 .cat-subs b { color: var(--ink-2); font-weight: 600; font-variant-numeric: tabular-nums; }
-.cat.is-none .cat-name strong { color: var(--ink-2); font-weight: 500; }
 
 /* Etiquetas de categoría */
 .chips { display: inline-flex; flex-wrap: wrap; gap: 4px; }
@@ -636,41 +638,337 @@ body.nightMode,
   color: var(--ink);
 }
 
-/* ---------- Diccionario (próximamente) ---------- */
+/* ---------- Enlaces al diccionario (categorías, "Ver todas") ---------- */
 
-.soon { padding: 8px 0 40px; max-width: 760px; }
-.soon h2 { font-size: 20px; margin-bottom: 8px; }
-.soon > p { color: var(--ink-2); max-width: 60ch; }
-
-.soon-preview {
-  list-style: none;
+.adic .cat-link,
+.adic .cat-link:hover,
+.adic .cat-link:active,
+.adic .link-button,
+.adic .link-button:hover,
+.adic .link-button:active {
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
   padding: 0;
-  margin-top: 28px;
-  border-top: 1px solid var(--rule);
+  cursor: pointer;
 }
 
-.soon-preview li {
-  display: grid;
-  grid-template-columns: 120px minmax(0, 1fr) auto;
-  gap: 16px;
+.adic .cat-link { color: inherit; text-align: left; }
+.adic .cat-link.is-main { font-weight: 600; color: var(--ink); }
+.adic .cat-link:hover {
+  color: var(--st-mature);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+.adic .cat.is-none .cat-link.is-main { color: var(--ink-2); font-weight: 500; }
+
+.adic .link-button {
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink-2);
+}
+.adic .link-button:hover { color: var(--st-mature); text-decoration: underline; text-underline-offset: 3px; }
+
+.list-head {
+  display: flex;
   align-items: baseline;
-  padding: 8px 0;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+/* ---------- Pestaña Diccionario ---------- */
+
+.dict { padding-bottom: 40px; }
+
+.dict-tools { display: grid; gap: 14px; }
+
+.dict-search {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  height: 44px;
+  padding: 0 14px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--sheet);
+  color: var(--ink-3);
+}
+
+.dict-search:focus-within {
+  border-color: var(--st-young);
+  box-shadow: 0 0 0 1px var(--st-young);
+}
+
+.adic .dict-search input:focus-visible { outline: none; }
+
+.dict-search input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 0;
+  outline: 0;
+  background: transparent;
+  color: var(--ink);
+  font: inherit;
+  font-size: 15px;
+}
+
+.dict-search input::placeholder { color: var(--ink-3); }
+
+.dict-filters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px 20px;
+}
+
+.dict-status { flex-wrap: wrap; }
+.adic .dict-status button .n {
+  margin-left: 4px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+.adic .dict-status button[aria-pressed="true"] .n { color: var(--ink-2); }
+
+.dict-selects { display: flex; flex-wrap: wrap; gap: 10px 16px; }
+
+.dict-select {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.adic .dict-select select {
+  height: 32px;
+  max-width: 220px;
+  padding: 0 8px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--sheet);
+  color: var(--ink);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.adic .dict-select select:hover { border-color: var(--st-young); }
+
+.dict-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 16px;
+  margin-top: 20px;
+  padding-bottom: 10px;
   border-bottom: 1px solid var(--rule);
 }
 
-.soon-preview .w {
-  font-family: var(--font-jp);
-  font-size: 19px;
-  font-weight: 700;
-  line-height: 1.7;
+.dict-count {
+  font-size: 13px;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
 }
 
-.soon-preview .m {
-  color: var(--ink-2);
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+.dict-active:empty { display: none; }
+
+.active-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 4px 2px 10px;
+  border-radius: 999px;
+  background: var(--st-learning);
+  color: var(--ink);
+  font-size: 13px;
 }
+
+.adic .pill-x,
+.adic .pill-x:hover,
+.adic .pill-x:active {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  line-height: 1;
+  font-size: 15px;
+  cursor: pointer;
+}
+.adic .pill-x:hover { background: var(--sheet); }
+
+.dict-list {
+  list-style: none;
+  padding: 0;
+  margin-top: 0;
+}
+
+.entry { border-bottom: 1px solid var(--rule); }
+
+.entry-main {
+  display: grid;
+  /* Columna de la palabra con ancho fijo para que los significados queden alineados */
+  grid-template-columns: 156px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 4px 24px;
+  padding: 10px 0;
+}
+
+.adic .entry-word,
+.adic .entry-word:hover,
+.adic .entry-word:active {
+  border: 0;
+  background: transparent;
+  padding: 0 2px;
+  border-radius: 4px;
+}
+
+.adic .entry-word {
+  justify-self: start;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  text-align: left;
+  font-family: var(--font-jp);
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.75;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+.adic .entry-word:hover,
+.entry.is-open .adic .entry-word,
+.adic .entry.is-open .entry-word { color: var(--st-mature); }
+
+.entry-meaning {
+  color: var(--ink);
+  line-height: 1.45;
+  overflow: hidden;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+}
+
+.entry-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 4px 8px;
+  margin-top: 4px;
+}
+
+.entry-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  margin-right: 4px;
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.jlpt {
+  display: inline-block;
+  padding: 0 7px;
+  border-radius: 4px;
+  box-shadow: inset 0 0 0 1px var(--rule);
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.7;
+  color: var(--ink-2);
+  font-variant-numeric: tabular-nums;
+}
+
+.adic .entry-open,
+.adic .entry-open:hover,
+.adic .entry-open:active {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: transparent;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--ink-2);
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.adic .entry-open:hover { border-color: var(--st-young); color: var(--st-mature); }
+.adic .entry-open.is-done,
+.adic .entry-open.is-done:hover { border-color: var(--st-young); background: var(--sheet); color: var(--st-mature); }
+
+.entry-detail {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px 40px;
+  margin: 0 0 14px;
+  padding: 14px 16px;
+  border-radius: 8px;
+  background: var(--sheet);
+}
+
+.detail-block h3 {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.kanji-list { display: flex; flex-wrap: wrap; gap: 8px; }
+
+.adic .kanji-btn,
+.adic .kanji-btn:hover,
+.adic .kanji-btn:active {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 6px;
+  padding: 4px 10px;
+  border: 1px solid var(--rule);
+  border-radius: 8px;
+  background: var(--paper);
+  cursor: pointer;
+}
+
+.adic .kanji-btn:hover { border-color: var(--st-young); }
+.kanji-btn .k { font-family: var(--font-jp); font-size: 22px; font-weight: 700; color: var(--ink); }
+.kanji-btn .n { font-size: 12px; color: var(--ink-3); font-variant-numeric: tabular-nums; }
+
+.detail-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px 24px;
+  margin: 0;
+}
+
+.detail-stats div { display: grid; gap: 0; }
+.detail-stats dt { font-size: 12px; color: var(--ink-3); }
+.detail-stats dd { margin: 0; color: var(--ink); font-variant-numeric: tabular-nums; }
+
+.adic .dict-more,
+.adic .dict-more:hover,
+.adic .dict-more:active {
+  display: block;
+  width: 100%;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px dashed var(--rule);
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ink-2);
+  font-size: 13px;
+  cursor: pointer;
+}
+
+.adic .dict-more:hover { border-color: var(--st-young); color: var(--st-mature); }
+
+.dict-empty { padding: 48px 0; max-width: 52ch; }
+.dict-empty h2 { font-size: 18px; margin-bottom: 6px; }
+.dict-empty p { color: var(--ink-2); margin-bottom: 10px; }
 
 /* ---------- Ritmo y listas ---------- */
 
@@ -827,7 +1125,11 @@ body.nightMode,
   .cat { grid-template-columns: minmax(0, 1fr) auto; row-gap: 6px; }
   .cat .segbar { grid-column: 1 / 3; grid-row: 2; }
   .cat-subs { grid-column: 1 / 3; }
-  .soon-preview li { grid-template-columns: 1fr; gap: 2px; }
+  .entry-main { grid-template-columns: minmax(0, 1fr) auto; }
+  .entry-body { grid-column: 1 / 3; grid-row: 2; }
+  .dict-selects { width: 100%; }
+  .adic .dict-select select { max-width: none; flex: 1; }
+  .dict-select { flex: 1 1 100%; }
 }
 
 @media (prefers-reduced-motion: reduce) {

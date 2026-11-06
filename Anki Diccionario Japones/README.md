@@ -4,17 +4,25 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
 
 ![Vista previa del panel](docs/vista-previa-claro.png)
 
-<sub>Vista previa con progreso de ejemplo sobre el mazo Kaishi 1.5k. También: [modo oscuro](docs/vista-previa-oscuro.png) y [pestaña Diccionario](docs/vista-previa-diccionario.png).</sub>
+![Pestaña Diccionario](docs/vista-previa-diccionario.png)
+
+<sub>Vista previa con progreso de ejemplo sobre el mazo Kaishi 1.5k. También en [modo oscuro](docs/vista-previa-oscuro.png).</sub>
 
 ## Qué hace
 
 - Se abre con un clic desde **Diccionario** en la barra de menús (junto a Herramientas, Ayuda y otros complementos), desde el botón **Diccionario** junto a Estadísticas o desde **Herramientas › Diccionario japonés**.
-- La ventana tiene pestañas: **Progreso** es la página principal y siempre abre primero; **Diccionario** tendrá la lista completa de tus palabras (en construcción).
+- La ventana tiene pestañas: **Progreso** es la página principal y siempre abre primero; **Diccionario** tiene la lista completa de tus palabras.
 - Cuenta tus palabras por estado: sabidas, jóvenes, aprendiendo, pendientes y suspendidas, y marca las difíciles.
 - Dibuja tu mazo completo como un mapa: cada cuadro es una palabra y se tiñe de índigo más oscuro conforme la aprendes. Al pasar el cursor ves la palabra, su lectura, su significado y su intervalo.
 - Clasifica cada palabra por categoría gramatical con JMdict (verbos godan, ichidan e irregulares, sustantivos, adjetivos い y な, adverbios, partículas…) y te dice cuántas sabes de cada una. La sección **Por categoría** aparece como una tira con tus tres categorías más grandes; al picarle se despliega completa.
 - Muestra cuántas palabras nuevas empiezas por semana y calcula en cuánto tiempo terminarías el mazo a tu ritmo.
 - Lista las palabras que acabas de aprender y las que más te cuestan.
+- En **Diccionario** ves todas tus palabras con su furigana, significado, estado, categorías y nivel JLPT:
+  - Búsqueda por kanji (学校), kana (がっこう), rōmaji (gakkou) o significado (school).
+  - Filtros por estado, categoría (con subtipos: godan, ichidan, adjetivos い/な…), nivel JLPT (N5 a N1) y kanji compartido: picas el 学 de 学校 y ves 学生, 学ぶ, 学園…
+  - Orden del mazo, recién aprendidas, más fallos, intervalo más largo o por lectura.
+  - Botón **Abrir en Anki** en cada palabra, que abre su tarjeta en el explorador para editarla.
+  - Desde Progreso, picarle a una categoría, a "Ver todas" o a un cuadro del mapa te lleva al diccionario ya filtrado.
 - Se adapta al modo claro u oscuro de Anki, y al español o inglés.
 
 ## Instalar
@@ -62,6 +70,10 @@ Si dos palabras se leen igual (いくら "cuánto" e いくら "huevas de salmó
 
 El complemento no trae JMdict completo, solo un índice de palabra, lectura y categorías (`anki_diccionario/data/jmdict_pos.tsv.gz`, 4 MB). La primera vez que abres la ventana lo convierte en una base dentro de `user_files/` para buscar rápido (tarda alrededor de un segundo). Con el mazo Kaishi 1.5k clasifica las 1,500 palabras.
 
+## Nivel JLPT
+
+El nivel sale de las listas de vocabulario de [open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks) (licencia MIT), basadas en las de Jonathan Waller. Desde 2010 no hay listas oficiales del JLPT, así que es una guía. Si una palabra está escrita distinto en la lista (終わる / 終る, ご飯 / 御飯, 出来る / できる), la reconoce si tiene la misma lectura y algún kanji en común. Con Kaishi 1.5k, el 95 % de las palabras tienen nivel.
+
 ## Estructura
 
 ```
@@ -72,9 +84,10 @@ Anki Diccionario Japones/
 │   ├── collector.py         lee el mazo y arma los datos (JSON)
 │   ├── fields.py            detecta campos y limpia el texto
 │   ├── categories.py        busca cada palabra en JMdict y le pone sus categorías
-│   ├── data/                índice de categorías sacado de JMdict
+│   ├── jlpt.py              nivel JLPT de cada palabra
+│   ├── data/                índices de categorías (JMdict) y niveles JLPT
 │   ├── config.json / .md    configuración y su explicación
-│   └── web/                 la página del panel (HTML, CSS, JS)
+│   └── web/                 la página del panel: dashboard.* (Progreso) y dictionary.js (Diccionario)
 ├── dev/                     herramientas para probar sin abrir Anki
 ├── docs/                    capturas
 └── dist/                    el .ankiaddon listo para instalar
@@ -99,6 +112,9 @@ python dev/build_preview.py datos.json vista.html --anki
 # (descárgalo de http://ftp.edrdg.org/pub/Nihongo/JMdict_e.gz)
 python dev/build_pos_index.py JMdict_e.gz
 
+# Regenerar los niveles JLPT (src/ de open-anki-jlpt-decks)
+python dev/build_jlpt_index.py open-anki-jlpt-decks/src
+
 # Generar el .ankiaddon
 python dev/package.py
 ```
@@ -107,7 +123,7 @@ python dev/package.py
 
 - [x] **Parte 1**: leer el mazo, detectar campos y mostrar el progreso
 - [x] **Parte 2**: pestañas en la ventana (Progreso siempre es la página principal) y categorías gramaticales automáticas con JMdict (verbos godan/ichidan, adjetivos い/な, sustantivos…), con varias etiquetas por palabra y una sección "Por categoría" en Progreso
-- [ ] **Parte 3**: pestaña Diccionario con todas las palabras, búsqueda (kanji, kana, rōmaji, significado) y filtros por estado, categoría, nivel JLPT y kanji compartido
+- [x] **Parte 3**: pestaña Diccionario con todas las palabras, búsqueda (kanji, kana, rōmaji, significado), filtros por estado, categoría, nivel JLPT y kanji compartido, y botón para abrir la tarjeta en Anki
 - [ ] **Parte 4**: repaso rápido dentro del complemento: eliges "Te cuestan trabajo" o "Estás aprendiendo", cuántas palabras quieres repasar, y se eligen al azar
 - [ ] **Parte 5**: configuración para personalizar el complemento: color de fondo o una imagen propia como fondo
 - [ ] **Parte 6**: exportar a una página web aparte
@@ -116,4 +132,6 @@ python dev/package.py
 
 Proyecto de Raul Juarez.
 
-Las categorías gramaticales vienen de JMdict, propiedad del [Electronic Dictionary Research and Development Group](https://www.edrdg.org/), y se usan bajo la licencia [CC BY-SA 4.0](https://www.edrdg.org/edrdg/licence.html). El índice derivado (`anki_diccionario/data/`) se distribuye bajo la misma licencia.
+Las categorías gramaticales vienen de JMdict, propiedad del [Electronic Dictionary Research and Development Group](https://www.edrdg.org/), y se usan bajo la licencia [CC BY-SA 4.0](https://www.edrdg.org/edrdg/licence.html). El índice derivado (`anki_diccionario/data/jmdict_pos.tsv.gz`) se distribuye bajo la misma licencia.
+
+Los niveles JLPT vienen de [open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks) © 2020 Jamie Sinclair, licencia MIT.

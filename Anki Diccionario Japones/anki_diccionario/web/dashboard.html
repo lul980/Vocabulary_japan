@@ -87,11 +87,17 @@
 
         <section class="lists">
           <div class="wordlist">
-            <h2 data-i18n="recentTitle">Recién aprendidas</h2>
+            <div class="list-head">
+              <h2 data-i18n="recentTitle">Recién aprendidas</h2>
+              <button type="button" class="link-button" id="see-recent" data-i18n="seeAll">Ver todas</button>
+            </div>
             <ol id="recent-list"></ol>
           </div>
           <div class="wordlist">
-            <h2 data-i18n="hardTitle">Te cuestan trabajo</h2>
+            <div class="list-head">
+              <h2 data-i18n="hardTitle">Te cuestan trabajo</h2>
+              <button type="button" class="link-button" id="see-hard" data-i18n="seeAll">Ver todas</button>
+            </div>
             <ol id="hard-list"></ol>
           </div>
         </section>
@@ -104,10 +110,37 @@
     </div>
 
     <div class="page tab-panel" id="panel-dictionary" role="tabpanel" aria-labelledby="tab-dictionary" hidden>
-      <section class="soon">
-        <h2 data-i18n="soonTitle">Tu diccionario llega en la siguiente versión</h2>
-        <p data-i18n="soonBody">Aquí vas a poder ver todas tus palabras, buscarlas por kanji, lectura o significado, y filtrarlas por categoría, estado y nivel JLPT.</p>
-        <ul class="soon-preview" id="soon-preview"></ul>
+      <section class="dict" id="dict">
+        <div class="dict-tools">
+          <label class="dict-search">
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true"><circle cx="7" cy="7" r="4.5" fill="none" stroke="currentColor" stroke-width="1.5"/><path d="M10.5 10.5 14 14" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span class="sr-only" id="dict-q-label">Buscar</span>
+            <input type="search" id="dict-q" autocomplete="off" spellcheck="false" aria-labelledby="dict-q-label">
+          </label>
+          <div class="dict-filters">
+            <div class="toggle dict-status" role="group" id="dict-status"></div>
+            <div class="dict-selects">
+              <label class="dict-select"><span id="dict-cat-label">Categoría</span><select id="dict-cat"></select></label>
+              <label class="dict-select"><span id="dict-jlpt-label">JLPT</span><select id="dict-jlpt"></select></label>
+              <label class="dict-select"><span id="dict-sort-label">Ordenar</span><select id="dict-sort"></select></label>
+            </div>
+          </div>
+        </div>
+
+        <div class="dict-meta">
+          <p class="dict-count" id="dict-count" aria-live="polite"></p>
+          <div class="dict-active" id="dict-active"></div>
+          <button type="button" class="link-button" id="dict-clear" hidden>Quitar filtros</button>
+        </div>
+
+        <ol class="dict-list" id="dict-list"></ol>
+        <button type="button" class="dict-more" id="dict-more" hidden></button>
+
+        <div class="dict-empty" id="dict-empty" hidden>
+          <h2 id="dict-empty-title"></h2>
+          <p id="dict-empty-body"></p>
+          <button type="button" class="link-button" id="dict-empty-clear"></button>
+        </div>
       </section>
     </div>
   </main>

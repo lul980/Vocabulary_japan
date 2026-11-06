@@ -16,6 +16,7 @@ import time
 from typing import Any, Dict, List, Optional, Tuple
 
 from .categories import GROUPS, Classifier, shared_classifier
+from .jlpt import JlptIndex, shared_jlpt
 from .fields import detect_fields, extract_entry, has_japanese
 
 DATA_VERSION = 1
@@ -134,7 +135,8 @@ def _ids_sql(ids: List[int]) -> str:
 
 
 def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str, Any]] = None,
-                         classifier: Optional[Classifier] = None) -> Dict[str, Any]:
+                         classifier: Optional[Classifier] = None,
+                         jlpt: Optional[JlptIndex] = None) -> Dict[str, Any]:
     config = config or {}
     settings = dict(DEFAULT_SETTINGS)
     for key in settings:
@@ -155,6 +157,7 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
         "settings": settings,
         "fields": [],
         "skipped": 0,
+        "jlpt": {"available": False, "source": "open-anki-jlpt-decks (MIT)"},
         "categories": {"available": False, "source": "", "unmatched": 0,
                        "groups": {k: list(v) for k, v in GROUPS.items()}},
         "words": [],
@@ -266,6 +269,13 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
             data["categories"].update({"available": True, "source": clf.source, "unmatched": unmatched})
     finally:
         clf.close()
+
+    # Nivel JLPT (5 = N5 ... 1 = N1, None = no está en las listas)
+    index = jlpt or shared_jlpt()
+    has_jlpt = index.load()
+    for w in words:
+        w["jlpt"] = index.level(w["word"], w["reading"]) if has_jlpt else None
+    data["jlpt"]["available"] = has_jlpt
 
     data["words"] = words
     data["skipped"] = skipped

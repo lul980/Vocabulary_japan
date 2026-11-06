@@ -93,7 +93,7 @@ class DashboardDialog(QDialog):
         self.web.stdHtml(
             body,
             css=[f"{base}/dashboard.css"],
-            js=[f"{base}/dashboard.js"],
+            js=[f"{base}/dictionary.js", f"{base}/dashboard.js"],
             context=self,
         )
 
@@ -110,6 +110,12 @@ class DashboardDialog(QDialog):
             config["deck"] = mw.col.decks.name(deck_id)
             save_config(config)
             self.refresh(deck_id)
+        elif cmd.startswith("adic:browse:"):
+            try:
+                note_id = int(cmd.rsplit(":", 1)[1])
+            except ValueError:
+                return None
+            open_in_browser(note_id)
         return None
 
     def refresh(self, deck_id: Optional[int] = None) -> None:
@@ -148,6 +154,18 @@ class DashboardDialog(QDialog):
             pass
         _dialog = None
         super().reject()
+
+
+def open_in_browser(note_id: int) -> None:
+    """Abre el explorador de Anki mostrando la tarjeta de esa palabra."""
+    import aqt
+
+    search = f"nid:{note_id}"
+    try:
+        aqt.dialogs.open("Browser", mw, search=(search,))
+    except TypeError:  # versiones viejas sin el parámetro search
+        browser = aqt.dialogs.open("Browser", mw)
+        browser.search_for(search)
 
 
 def open_dashboard() -> None:

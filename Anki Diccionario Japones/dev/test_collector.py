@@ -20,6 +20,7 @@ sys.path.insert(0, HERE)
 
 from anki_diccionario import fields  # noqa: E402
 from anki_diccionario.categories import Classifier, groups_for  # noqa: E402
+from anki_diccionario.jlpt import JlptIndex  # noqa: E402
 from anki_diccionario.collector import (  # noqa: E402
     build_dashboard_data, card_status, resolve_deck_id, summarize, word_status,
 )
@@ -128,6 +129,26 @@ def test_categories() -> bool:
     ])
 
 
+def test_jlpt() -> bool:
+    print("Niveles JLPT (lista de prueba)")
+    import gzip
+    tmp = tempfile.mkdtemp(prefix="adic-jlpt-")
+    gz = os.path.join(tmp, "jlpt.tsv.gz")
+    with gzip.open(gz, "wt", encoding="utf-8") as fh:
+        fh.write("#JLPT\tprueba\tMIT\n会う\tあう\t5\n終る\tおわる\t5\n重い\tおもい\t5\n"
+                 "できる\tできる\t5\n直ぐ\tすぐ\t5\n～円\t～えん\t5\n完全\tかんぜん\t3\n完全\tかんぜん\t2\n")
+    j = JlptIndex(gz)
+    return all([
+        check("exacta", j.level("会う", "あう"), 5),
+        check("el nivel más fácil si se repite", j.level("完全", "かんぜん"), 3),
+        check("okurigana distinta (終わる/終る)", j.level("終わる", "おわる"), 5),
+        check("la lista en kana (出来る/できる)", j.level("出来る", "できる"), 5),
+        check("tu palabra en kana (すぐ/直ぐ)", j.level("すぐ", "すぐ"), 5),
+        check("con 〜", j.level("〜円", "えん"), 5),
+        check("homófono sin kanji en común (思い/重い)", j.level("思い", "おもい"), None),
+    ])
+
+
 def open_files_in(folder: str) -> list:
     """Archivos de `folder` que este proceso tiene abiertos (solo Linux)."""
     fd_dir = "/proc/self/fd"
@@ -213,7 +234,7 @@ def test_deck(path: str, json_out: str = "") -> None:
 
 
 if __name__ == "__main__":
-    ok = test_fields() & test_categories() & test_cache_released()
+    ok = test_fields() & test_categories() & test_jlpt() & test_cache_released()
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     json_out = ""
     if "--json" in sys.argv:
