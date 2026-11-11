@@ -11,6 +11,7 @@ Proyecto de Raul Juarez.
 from __future__ import annotations
 
 import html
+import os
 import re
 from typing import Dict, List, Optional, Sequence
 
@@ -136,6 +137,113 @@ def detect_by_name(field_names: Sequence[str]) -> Dict[str, Optional[str]]:
 
 
 # --------------------------------------------------------------------------
+# Oración de ejemplo y audio
+# --------------------------------------------------------------------------
+
+_SENT = ("sentence", "example", "例文")
+_SENT_MEANING = ("meaning", "english", "translation", "eng", "意味", "訳")
+_AUDIO = ("audio", "sound", "音声")
+_SENT_BLOCK = _SENT_MEANING + _AUDIO + ("furigana", "reading", "kana", "image", "picture", "photo")
+_WORD_AUDIO_EXACT = ("word audio", "vocab audio", "vocabulary audio", "expression audio",
+                     "audio", "sound", "音声")
+
+
+def detect_extras(field_names: Sequence[str], taken: Sequence[Optional[str]] = ()) -> Dict[str, Optional[str]]:
+    """Campos de oración, su furigana, su traducción y el audio (palabra y oración).
+
+    Kaishi: Sentence, Sentence Furigana, Sentence Meaning, Word Audio, Sentence Audio.
+    Core 2k/6k: Expression (la oración), Sentence-English, Vocabulary-Audio, Sentence-Audio.
+    Lapis/Yomitan: Sentence, SentenceFurigana, ExpressionAudio, SentenceAudio.
+    """
+    named = [(n, _norm(n)) for n in field_names if n not in taken]
+
+    def first(test) -> Optional[str]:
+        for original, low in named:
+            if test(low):
+                return original
+        return None
+
+    has = lambda low, words: any(w in low for w in words)  # noqa: E731
+    sentence = first(lambda low: low in ("sentence", "example sentence", "example", "例文")) or \
+        first(lambda low: has(low, _SENT) and not has(low, _SENT_BLOCK))
+    if not sentence:
+        # Core 2k/6k: la oración vive en "Expression" cuando la palabra está en otro campo
+        sentence = first(lambda low: low == "expression")
+    sentence_furigana = first(lambda low: has(low, _SENT) and "furigana" in low)
+    sentence_meaning = first(lambda low: has(low, _SENT) and has(low, _SENT_MEANING) and not has(low, _AUDIO))
+    sentence_audio = first(lambda low: has(low, _SENT) and has(low, _AUDIO))
+    word_audio = first(lambda low: low in _WORD_AUDIO_EXACT) or \
+        first(lambda low: has(low, _AUDIO) and not has(low, _SENT))
+    return {
+        "sentence": sentence,
+        "sentence_furigana": sentence_furigana,
+        "sentence_meaning": sentence_meaning,
+        "word_audio": word_audio,
+        "sentence_audio": sentence_audio,
+    }
+
+
+_BOLD_SPLIT_RE = re.compile(r"(</?(?:b|strong)\b[^>]*>)", re.IGNORECASE)
+
+
+def parse_rich(value: str) -> List[List]:
+    """Texto de Anki -> segmentos [texto, lectura, resaltado].
+
+    Entiende la furigana de Anki ("古[ふる]い") y el <b> con el que los mazos
+    marcan la palabra dentro de la oración. Ejemplo:
+    'この 古[ふる]い<b>寺[てら]</b>' -> [["この","",0], ["古","ふる",0], ["い","",0], ["寺","てら",1]]
+    """
+    segments: List[List] = []
+    bold = False
+    for part in _BOLD_SPLIT_RE.split(value or ""):
+        if _BOLD_SPLIT_RE.fullmatch(part or ""):
+            bold = not part.startswith("</")
+            continue
+        # Como clean_text, pero sin recortar los espacios de las orillas
+        text = _BR_RE.sub(" ", _SOUND_RE.sub("", part))
+        text = html.unescape(_TAG_RE.sub("", text)).replace("\xa0", " ")
+        text = _SPACE_RE.sub(" ", text)
+        if not text:
+            continue
+        pos = 0
+        for m in _FURIGANA_RE.finditer(text):
+            if m.start() > pos:
+                segments.append([text[pos:m.start()], "", int(bold)])
+            segments.append([m.group(1), m.group(2), int(bold)])
+            pos = m.end()
+        if pos < len(text):
+            segments.append([text[pos:], "", int(bold)])
+    # Los espacios que separan grupos de furigana no se usan en japonés
+    out: List[List] = []
+    for t, r, h in segments:
+        if has_japanese(t) or r:
+            t = t.replace(" ", "")
+        if not t:
+            continue
+        if out and not r and not out[-1][1] and out[-1][2] == h:
+            out[-1][0] += t  # junta texto seguido con el mismo formato
+        elif out and r and out[-1][1] and out[-1][2] == h:
+            # 少[しょう] 女[じょ] -> 少女[しょうじょ]: una sola furigana para kanji
+            # seguidos, así no quedan huecos cuando la lectura es más ancha
+            out[-1][0] += t
+            out[-1][1] += r
+        else:
+            out.append([t, r, h])
+    if out:
+        out[0][0] = out[0][0].lstrip()
+        out[-1][0] = out[-1][0].rstrip()
+    return [s for s in out if s[0]]
+
+
+_SOUND_FILE_RE = re.compile(r"\[sound:([^\]]+)\]")
+
+
+def sound_files(value: str) -> List[str]:
+    """Archivos de audio de un campo ("[sound:x.mp3]" -> ["x.mp3"]), solo el nombre."""
+    return [os.path.basename(f.strip()) for f in _SOUND_FILE_RE.findall(value or "") if f.strip()]
+
+
+# --------------------------------------------------------------------------
 # Detección por contenido (cuando los nombres no ayudan)
 # --------------------------------------------------------------------------
 
@@ -183,6 +291,17 @@ def detect_fields(field_names: Sequence[str], samples: List[List[str]],
     Regresa también "source" para mostrarle al usuario de dónde salió.
     """
     names = list(field_names)
+    result = _detect_main(names, samples, sort_field, override)
+    extras = detect_extras(names, taken=[result.get(k) for k in ("word", "reading", "furigana", "meaning")])
+    for key in extras:
+        if override and override.get(key) in names:
+            extras[key] = override[key]
+    result.update(extras)
+    return result
+
+
+def _detect_main(names: List[str], samples: List[List[str]], sort_field: Optional[str],
+                 override: Optional[Dict[str, str]]) -> Dict[str, Optional[str]]:
     if override:
         chosen = {k: (override.get(k) if override.get(k) in names else None)
                   for k in ("word", "reading", "furigana", "meaning")}
@@ -226,4 +345,26 @@ def extract_entry(values: Dict[str, str], mapping: Dict[str, Optional[str]]) -> 
             reading = furigana_reading(value) if has_furigana(value) else value
 
     meaning = clean_text(values.get(mapping.get("meaning") or "", ""))
-    return {"word": word, "reading": reading, "meaning": meaning}
+
+    # Oración: mejor la versión con furigana; si no hay, la normal
+    sentence: List[List] = []
+    for key in ("sentence_furigana", "sentence"):
+        raw = values.get(mapping.get(key) or "", "")
+        if raw and has_japanese(raw):
+            sentence = parse_rich(raw)
+            break
+
+    word_audio = sound_files(values.get(mapping.get("word_audio") or "", ""))
+    if not word_audio:  # algunos mazos meten el audio en el mismo campo de la palabra
+        word_audio = sound_files(values.get(mapping.get("word") or "", ""))
+    return {
+        "word": word,
+        "reading": reading,
+        "meaning": meaning,
+        "sentence": sentence,
+        "sentence_meaning": clean_text(values.get(mapping.get("sentence_meaning") or "", "")),
+        "audio": {
+            "word": word_audio,
+            "sentence": sound_files(values.get(mapping.get("sentence_audio") or "", "")),
+        },
+    }

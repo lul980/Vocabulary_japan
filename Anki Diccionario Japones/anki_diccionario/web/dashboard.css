@@ -21,6 +21,7 @@
   --st-mature: #1f3b73;
   --st-suspended: #98a2b3;
   --st-leech: #c2452b;
+  --hl: #2f62b8; /* la palabra resaltada dentro de la oración */
 
   --font-ui: "Segoe UI Variable Text", "Segoe UI", "Inter", "Hiragino Sans", "Yu Gothic UI",
     "Noto Sans CJK JP", system-ui, sans-serif;
@@ -48,6 +49,7 @@
   --st-mature: #a9c3ef;
   --st-suspended: #5d687c;
   --st-leech: #ef7d61;
+  --hl: #8db2f2;
 }
 
 html, body {
@@ -1172,10 +1174,35 @@ body.nightMode,
 
 .review-word rt { font-size: .32em; }
 
-/* La furigana ocupa su lugar desde el principio, pero no se ve hasta voltear */
-.review-card:not(.is-revealed) .review-word rt { visibility: hidden; }
+/* La furigana de la palabra ocupa su lugar desde el principio, pero no se ve hasta voltear.
+   (La oración se dibuja sin furigana en el frente; ver sentenceHtml.) */
+.review-card:not(.is-revealed) rt { visibility: hidden; }
 
-.review-answer { display: grid; gap: 8px; justify-items: center; }
+/* Oración de ejemplo, con la palabra resaltada como en las tarjetas de Kaishi */
+.review-sentence {
+  max-width: 32em;
+  font-family: var(--font-jp);
+  font-size: 20px;
+  line-height: 2.1;
+  color: var(--ink);
+}
+
+.review-sentence rt { font-size: .5em; }
+
+.adic .hl { color: var(--hl); font-weight: 700; }
+.adic .hl rt { color: var(--hl); }
+
+.review-answer {
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  width: 100%;
+  margin-top: 6px;
+  padding-top: 16px;
+  border-top: 1px solid var(--rule);
+}
+
+.review-translation { font-size: 14px; color: var(--ink-2); max-width: 52ch; }
 .review-reading { font-family: var(--font-jp); font-size: 18px; color: var(--ink-2); }
 .review-reading:empty { display: none; }
 .review-meaning { font-size: 20px; line-height: 1.4; color: var(--ink); max-width: 46ch; }
@@ -1223,6 +1250,53 @@ body.nightMode,
 .review-missed .m { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .list-links { display: inline-flex; gap: 14px; }
+
+.review-check {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 18px;
+  font-size: 13px;
+  color: var(--ink-2);
+  cursor: pointer;
+}
+
+.review-check input { width: 16px; height: 16px; margin: 0; accent-color: var(--st-mature); }
+
+/* Botones de audio (los reproduce Anki) */
+.audio-row {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 4px;
+}
+
+.adic .audio-btn,
+.adic .audio-btn:hover,
+.adic .audio-btn:active {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  height: 30px;
+  padding: 0 14px 0 12px;
+  border: 1px solid var(--rule);
+  border-radius: 999px;
+  background: var(--paper);
+  color: var(--ink-2);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.adic .audio-btn:hover { border-color: var(--st-young); color: var(--st-mature); }
+
+/* Ejemplo en el detalle del diccionario */
+.detail-example { flex: 1 1 100%; }
+.example-sentence { font-family: var(--font-jp); font-size: 18px; line-height: 2.05; color: var(--ink); }
+.example-sentence rt { font-size: .5em; }
+.example-translation { font-size: 13px; color: var(--ink-2); margin-bottom: 8px; }
+.detail-example .audio-row { justify-content: flex-start; }
 
 /* ---------- Ritmo y listas ---------- */
 

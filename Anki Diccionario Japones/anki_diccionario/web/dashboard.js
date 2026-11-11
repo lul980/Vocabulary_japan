@@ -219,6 +219,51 @@
     return `<ruby>${esc(word)}<rt>${esc(reading)}</rt></ruby>`;
   }
 
+  // Oración: segmentos [texto, furigana, resaltado] -> HTML (con <ruby> si furigana = true).
+  // Sin furigana se dibuja como texto normal: una furigana oculta igual ocupa
+  // su ancho y deja huecos ("妹 は"), por eso en el frente no se incluye.
+  function sentenceHtml(segments, furigana = true) {
+    return (segments || []).map(([text, reading, hl]) => {
+      const inner = reading && furigana ? `<ruby>${esc(text)}<rt>${esc(reading)}</rt></ruby>` : esc(text);
+      return hl ? `<span class="hl">${inner}</span>` : inner;
+    }).join("");
+  }
+
+  // ---------- Audio: lo reproduce Anki (solo suena, no cuenta como repaso) ----------
+
+  const hasAudio = (w) => !!(w && w.audio && ((w.audio.word || []).length || (w.audio.sentence || []).length));
+  const insideAnki = () => typeof window.pycmd === "function";
+
+  function playAudio(noteId, which) {
+    if (insideAnki()) send(`adic:play:${noteId}:${which}`);
+  }
+
+  function stopAudio() {
+    if (insideAnki()) send("adic:stop");
+  }
+
+  const PLAY_ICON = `<svg viewBox="0 0 16 16" width="12" height="12" aria-hidden="true"><path d="M4.5 2.8v10.4a.6.6 0 0 0 .9.5l8.3-5.2a.6.6 0 0 0 0-1L5.4 2.3a.6.6 0 0 0-.9.5Z" fill="currentColor"/></svg>`;
+
+  // Botones "▶ Palabra" y "▶ Oración" (labels = textos de quien los usa)
+  function audioButtons(w, labels) {
+    if (!hasAudio(w)) return "";
+    const btn = (which, text) =>
+      `<button type="button" class="audio-btn" data-play="${which}" data-id="${w.id}" title="${esc(labels.playTitle)}">${PLAY_ICON}<span>${esc(text)}</span></button>`;
+    return `<p class="audio-row">${(w.audio.word || []).length ? btn("word", labels.playWord) : ""}${(w.audio.sentence || []).length ? btn("sentence", labels.playSentence) : ""}</p>`;
+  }
+
+  function audioClick(btn, w, labels) {
+    if (!btn || !w) return;
+    if (insideAnki()) {
+      playAudio(w.id, btn.dataset.play);
+      return;
+    }
+    const span = btn.querySelector("span");
+    const old = span.textContent;
+    span.textContent = labels.audioOutside;
+    setTimeout(() => { span.textContent = old; }, 1600);
+  }
+
   function applyI18n() {
     document.documentElement.lang = lang;
     document.querySelectorAll("[data-i18n]").forEach((el) => {
@@ -525,6 +570,7 @@
   const TABS = ["progress", "dictionary", "review"];
 
   function showTab(name, focus) {
+    if (activeTab === "review" && name !== "review") stopAudio();
     activeTab = name;
     TABS.forEach((tab) => {
       const btn = $("tab-" + tab);
@@ -903,6 +949,7 @@
     if (window.AdicDictionary) {
       dict = window.AdicDictionary({
         $, esc, fmt, fmtDate, ruby, send, STATUS_VAR, tagLabels, showTab,
+        sentenceHtml, hasAudio, audioButtons, audioClick,
         lang: () => lang,
         t: () => t,
       });
@@ -910,6 +957,7 @@
     if (window.AdicReview) {
       review = window.AdicReview({
         $, esc, fmt, send, ruby, tagLabels, showTab,
+        sentenceHtml, hasAudio, playAudio, stopAudio, audioButtons, audioClick,
         lang: () => lang,
         t: () => t,
         isActive: () => activeTab === "review",

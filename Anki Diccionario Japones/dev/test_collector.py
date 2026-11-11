@@ -40,7 +40,31 @@ def test_fields() -> bool:
         check("furigana lectura", fields.furigana_reading("日本[にほん]語[ご]"), "にほんご"),
         check("furigana con okurigana", fields.furigana_reading(" 食[た]べる"), "たべる"),
         check("limpiar html", fields.clean_text("<b>私</b>&nbsp;[sound:a.mp3]<br>"), "私"),
+        check("oración con furigana y <b>",
+              fields.parse_rich("この 古[ふる]い<b>完[かん] 全[ぜん]</b>な 形[かたち]。"),
+              [["この", "", 0], ["古", "ふる", 0], ["い", "", 0], ["完全", "かんぜん", 1], ["な", "", 0], ["形", "かたち", 0], ["。", "", 0]]),
+        check("oración sin furigana", fields.parse_rich("私は<b>勉強</b>します。"),
+              [["私は", "", 0], ["勉強", "", 1], ["します。", "", 0]]),
+        check("archivos de audio (sin rutas)", fields.sound_files("[sound:a.mp3] [sound:../x/b.ogg]"), ["a.mp3", "b.ogg"]),
     ]
+
+    print("Oración y audio por nombre de campo")
+    extras = {
+        "Kaishi": (["Word", "Word Reading", "Word Meaning", "Word Furigana", "Word Audio", "Sentence",
+                    "Sentence Meaning", "Sentence Furigana", "Sentence Audio"],
+                   ("Sentence", "Sentence Furigana", "Sentence Meaning", "Word Audio", "Sentence Audio")),
+        "Core 2k/6k": (["Vocabulary-Kanji", "Vocabulary-Kana", "Vocabulary-English", "Vocabulary-Audio",
+                        "Expression", "Reading", "Sentence-Kana", "Sentence-English", "Sentence-Audio"],
+                       ("Expression", None, "Sentence-English", "Vocabulary-Audio", "Sentence-Audio")),
+        "Lapis": (["Expression", "ExpressionFurigana", "ExpressionReading", "ExpressionAudio", "MainDefinition",
+                   "Sentence", "SentenceFurigana", "SentenceAudio"],
+                  ("Sentence", "SentenceFurigana", None, "ExpressionAudio", "SentenceAudio")),
+        "Básico": (["Front", "Back"], (None, None, None, None, None)),
+    }
+    for name, (names, want) in extras.items():
+        got = fields.detect_fields(names, [])
+        results.append(check(name, tuple(got[k] for k in ("sentence", "sentence_furigana", "sentence_meaning",
+                                                          "word_audio", "sentence_audio")), want))
 
     # Nombres de campos de mazos populares
     decks = {

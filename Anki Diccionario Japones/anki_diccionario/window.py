@@ -73,6 +73,7 @@ class DashboardDialog(QDialog):
         self.resize(1120, 840)
         restoreGeom(self, GEOM_KEY)
 
+        self._audio: Dict[int, Dict[str, list]] = {}  # audio de cada palabra (de la última lectura)
         self.web = AnkiWebView(parent=self, title="anki_diccionario")
         self.web.set_bridge_command(self._on_bridge_cmd, self)
         layout = QVBoxLayout()
@@ -97,7 +98,12 @@ class DashboardDialog(QDialog):
             context=self,
         )
 
-    # La página manda "adic:refresh" (botón Actualizar) y "adic:deck:<id>" (selector de mazo)
+    # Mensajes de la página:
+    #   adic:refresh              botón Actualizar
+    #   adic:deck:<id>            selector de mazo
+    #   adic:browse:<nota>        "Abrir en Anki"
+    #   adic:play:<nota>:<cuál>   audio de la palabra ("word", "sentence" o "all")
+    #   adic:stop                 parar el audio
     def _on_bridge_cmd(self, cmd: str) -> Any:
         if cmd == "adic:refresh":
             self.refresh()
@@ -116,6 +122,12 @@ class DashboardDialog(QDialog):
             except ValueError:
                 return None
             open_in_browser(note_id)
+        elif cmd.startswith("adic:play:"):
+            parts = cmd.split(":")
+            if len(parts) == 4 and parts[2].isdigit():
+                play_audio(self._audio.get(int(parts[2]), {}), parts[3])
+        elif cmd == "adic:stop":
+            stop_audio()
         return None
 
     def refresh(self, deck_id: Optional[int] = None) -> None:
@@ -139,6 +151,9 @@ class DashboardDialog(QDialog):
         query.run_in_background()
 
     def _send(self, data: Dict[str, Any]) -> None:
+        # Guardamos qué audios tiene cada palabra: la página solo pide "el audio
+        # de la nota X" y aquí se decide qué archivo es (nunca uno que mande la página)
+        self._audio = {w["id"]: w.get("audio") or {} for w in data.get("words", [])}
         payload = json.dumps(data, ensure_ascii=False)
         self.web.eval(f"window.AnkiDiccionario && AnkiDiccionario.render({payload});")
 
@@ -148,12 +163,41 @@ class DashboardDialog(QDialog):
     def reject(self) -> None:  # cerrar con la X o con Esc
         global _dialog
         saveGeom(self, GEOM_KEY)
+        stop_audio()
         try:
             self.web.cleanup()
         except Exception:
             pass
         _dialog = None
         super().reject()
+
+
+def play_audio(audio: Dict[str, list], which: str) -> None:
+    """Reproduce el audio con el mismo reproductor que usa Anki al repasar.
+
+    Solo suena: no cuenta como repaso ni cambia nada de la tarjeta.
+    """
+    if which == "all":
+        files = list(audio.get("word", [])) + list(audio.get("sentence", []))
+    else:
+        files = list(audio.get(which, []))
+    if not files:
+        return
+    try:
+        from anki.sound import SoundOrVideoTag
+        from aqt.sound import av_player
+    except ImportError:
+        return
+    # Por seguridad Anki pide solo el nombre del archivo, sin rutas
+    av_player.play_tags([SoundOrVideoTag(filename=os.path.basename(f)) for f in files])
+
+
+def stop_audio() -> None:
+    try:
+        from aqt.sound import av_player
+        av_player.stop_and_clear_queue()
+    except Exception:
+        pass
 
 
 def open_in_browser(note_id: int) -> None:

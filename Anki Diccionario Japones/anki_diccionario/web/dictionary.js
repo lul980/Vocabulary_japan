@@ -44,6 +44,11 @@
       opened: "Abierta en Anki",
       openOutside: "Solo funciona dentro de Anki",
       detailKanji: "Palabras con el mismo kanji",
+      detailExample: "Ejemplo",
+      playWord: "Palabra",
+      playSentence: "Oración",
+      playTitle: "Reproducir con el audio de tu tarjeta",
+      audioOutside: "Solo dentro de Anki",
       detailStats: "Repaso",
       matured: "Sabida desde",
       jlptBadge: (n) => `N${n}`,
@@ -79,6 +84,11 @@
       opened: "Opened in Anki",
       openOutside: "Only works inside Anki",
       detailKanji: "Words with the same kanji",
+      detailExample: "Example",
+      playWord: "Word",
+      playSentence: "Sentence",
+      playTitle: "Play the audio from your card",
+      audioOutside: "Only inside Anki",
       detailStats: "Review",
       matured: "Known since",
       jlptBadge: (n) => `N${n}`,
@@ -394,7 +404,15 @@
       } else {
         stats.push([t.status.new, "—"]);
       }
+      const example = (w.sentence && w.sentence.length) || ctx.hasAudio(w)
+        ? `<div class="detail-block detail-example"><h3>${esc(d.detailExample)}</h3>
+             ${w.sentence && w.sentence.length ? `<p class="example-sentence" lang="ja">${ctx.sentenceHtml(w.sentence)}</p>` : ""}
+             ${w.sentence_meaning ? `<p class="example-translation">${esc(w.sentence_meaning)}</p>` : ""}
+             ${ctx.audioButtons(w, d)}
+           </div>`
+        : "";
       return `<div class="entry-detail">
+          ${example}
           ${kanji ? `<div class="detail-block"><h3>${esc(d.detailKanji)}</h3><div class="kanji-list">${kanji}</div></div>` : ""}
           <div class="detail-block"><h3>${esc(d.detailStats)}</h3><dl class="detail-stats">${stats.map(([k, v]) => `<div><dt>${esc(k)}</dt><dd>${esc(v)}</dd></div>`).join("")}</dl></div>
         </div>`;
@@ -464,7 +482,9 @@
         const w = words.find((x) => x.id === id);
         if (!w) return;
 
-        if (ev.target.closest(".entry-open")) {
+        if (ev.target.closest(".audio-btn")) {
+          ctx.audioClick(ev.target.closest(".audio-btn"), w, d);
+        } else if (ev.target.closest(".entry-open")) {
           openInAnki(ev.target.closest(".entry-open"), id);
         } else if (ev.target.closest(".kanji-btn")) {
           const k = ev.target.closest(".kanji-btn").dataset.kanji;

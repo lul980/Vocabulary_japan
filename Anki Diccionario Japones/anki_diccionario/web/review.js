@@ -40,6 +40,12 @@
       finish: "Terminar",
       keysFront: "Espacio para voltear",
       keysBack: "1 = no la sabía, 2 = la sabía",
+      keysAudio: ", R = repetir audio",
+      autoplay: "Reproducir el audio al voltear (como en Anki)",
+      playWord: "Palabra",
+      playSentence: "Oración",
+      playTitle: "Reproducir con el audio de tu tarjeta",
+      audioOutside: "Solo dentro de Anki",
       lapsesInAnki: (n) => `${n} ${n === 1 ? "fallo" : "fallos"} en Anki`,
       resultTitle: (ok, n) => `Sabías ${ok} de ${n}`,
       resultPerfect: "Las recordaste todas.",
@@ -81,6 +87,12 @@
       finish: "Finish",
       keysFront: "Space to flip",
       keysBack: "1 = didn't know, 2 = knew it",
+      keysAudio: ", R = replay audio",
+      autoplay: "Play audio when flipping (like Anki)",
+      playWord: "Word",
+      playSentence: "Sentence",
+      playTitle: "Play the audio from your card",
+      audioOutside: "Only inside Anki",
       lapsesInAnki: (n) => `${n} ${n === 1 ? "lapse" : "lapses"} in Anki`,
       resultTitle: (ok, n) => `You knew ${ok} of ${n}`,
       resultPerfect: "You remembered them all.",
@@ -112,7 +124,7 @@
     let r = I18N.es;
     let words = [];
     // minLapses: 1, 2, 3, 5 o "leech" (las "Difíciles"); null = elegir solo
-    const setup = { group: "hard", amount: 20, custom: "", minLapses: null };
+    const setup = { group: "hard", amount: 20, custom: "", minLapses: null, autoplay: true };
     let leechLapses = 8;
     // Sesión en curso: solo vive en memoria, nunca se manda a Anki
     let session = null; // { cards, index, revealed, results: [{w, knew}] }
@@ -201,6 +213,11 @@
       $("review-custom").max = String(available || 1);
       $("review-custom").value = setup.custom;
 
+      const anyAudio = words.some(ctx.hasAudio);
+      $("review-autoplay-row").hidden = !anyAudio;
+      $("review-autoplay").checked = setup.autoplay;
+      $("review-autoplay-label").textContent = r.autoplay;
+
       updateStart();
     }
 
@@ -227,8 +244,11 @@
       $("review-bar").style.width = `${(s.index / s.cards.length) * 100}%`;
       $("review-finish").textContent = r.finish;
 
-      // La furigana se dibuja siempre pero oculta, para que la palabra no brinque al voltear
+      // La furigana se dibuja siempre pero oculta, para que nada brinque al voltear.
+      // La oración va abajo de la palabra desde el frente, como en las tarjetas de Kaishi.
       $("review-word").innerHTML = ctx.ruby(w.word, w.reading);
+      $("review-sentence").innerHTML = ctx.sentenceHtml(w.sentence, s.revealed);
+      $("review-sentence").hidden = !(w.sentence && w.sentence.length);
       $("review-card").classList.toggle("is-revealed", s.revealed);
 
       const chips = ctx.tagLabels(w.tags).slice(0, 3).map((l, i) =>
@@ -237,7 +257,9 @@
       const lapses = w.lapses ? `<span class="review-lapses">${esc(r.lapsesInAnki(w.lapses))}</span>` : "";
       $("review-answer").innerHTML = s.revealed
         ? `<p class="review-meaning">${esc(w.meaning)}</p>
-           <p class="review-meta">${chips}${jlpt}${lapses}</p>`
+           ${w.sentence_meaning ? `<p class="review-translation">${esc(w.sentence_meaning)}</p>` : ""}
+           <p class="review-meta">${chips}${jlpt}${lapses}</p>
+           ${ctx.audioButtons(w, r)}`
         : "";
       $("review-answer").hidden = !s.revealed;
 
@@ -245,19 +267,28 @@
         ? `<button type="button" class="review-btn is-miss" id="review-didnt">${esc(r.didnt)} <kbd>1</kbd></button>
            <button type="button" class="review-btn is-hit" id="review-knew">${esc(r.knew)} <kbd>2</kbd></button>`
         : `<button type="button" class="review-btn is-main" id="review-reveal">${esc(r.show)} <kbd>␣</kbd></button>`;
-      $("review-keys").textContent = s.revealed ? r.keysBack : r.keysFront;
+      $("review-keys").textContent = s.revealed ? r.keysBack + (ctx.hasAudio(w) ? r.keysAudio : "") : r.keysFront;
+    }
+
+    function playCurrent(which) {
+      if (!session) return;
+      const w = session.cards[session.index];
+      if (ctx.hasAudio(w)) ctx.playAudio(w.id, which);
     }
 
     function reveal() {
       if (!session || session.revealed) return;
       session.revealed = true;
       renderCard();
+      // Como Anki: el audio suena al mostrar la respuesta (palabra y luego oración)
+      if (setup.autoplay) playCurrent("all");
       $("review-knew").focus();
     }
 
     function grade(knew) {
       if (!session || !session.revealed) return;
       session.results.push({ w: session.cards[session.index], knew });
+      ctx.stopAudio();
       session.index += 1;
       session.revealed = false;
       if (session.index >= session.cards.length) {
@@ -326,12 +357,18 @@
         const n = chosenAmount(list.length);
         if (n) startSession(shuffle(list).slice(0, n));
       });
+      $("review-autoplay").addEventListener("change", (ev) => { setup.autoplay = ev.target.checked; });
+      $("review-answer").addEventListener("click", (ev) => {
+        const btn = ev.target.closest(".audio-btn");
+        if (btn) ctx.audioClick(btn, session && session.cards[session.index], r);
+      });
       $("review-actions").addEventListener("click", (ev) => {
         if (ev.target.closest("#review-reveal")) reveal();
         else if (ev.target.closest("#review-knew")) grade(true);
         else if (ev.target.closest("#review-didnt")) grade(false);
       });
       $("review-finish").addEventListener("click", () => {
+        ctx.stopAudio();
         if (session && session.results.length) renderResult();
         else { session = null; renderSetup(); }
       });
@@ -365,6 +402,9 @@
         } else if (session.revealed && (ev.key === "2" || ev.key === "ArrowRight")) {
           ev.preventDefault();
           grade(true);
+        } else if (session.revealed && (ev.key === "r" || ev.key === "R")) {
+          ev.preventDefault();
+          playCurrent("all");
         }
       });
     }

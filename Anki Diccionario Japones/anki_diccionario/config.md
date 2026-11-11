@@ -23,3 +23,15 @@
 ```
 
 `reading` puede omitirse si la palabra ya trae furigana, como `日本[にほん]`.
+
+También puedes indicar la oración y el audio: `sentence`, `sentence_furigana`, `sentence_meaning`, `word_audio` y `sentence_audio`. Ejemplo para Kaishi:
+
+```
+"Kaishi 1.5k": {
+    "word": "Word",
+    "sentence_furigana": "Sentence Furigana",
+    "sentence_meaning": "Sentence Meaning",
+    "word_audio": "Word Audio",
+    "sentence_audio": "Sentence Audio"
+}
+```

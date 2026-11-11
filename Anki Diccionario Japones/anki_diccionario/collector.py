@@ -251,6 +251,10 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
             "leech": "leech" in tags or lapses >= leech_lapses,
             "first_review": min(firsts) if firsts else None,
             "matured": matured_ms if status == "mature" else None,
+            # Oración de ejemplo: segmentos [texto, furigana, resaltado]
+            "sentence": entry["sentence"],
+            "sentence_meaning": entry["sentence_meaning"],
+            "audio": entry["audio"],
         })
 
     # Categorías gramaticales con JMdict
@@ -286,6 +290,8 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
             "word": m.get("word"),
             "reading": m.get("reading") or m.get("furigana"),
             "meaning": m.get("meaning"),
+            "sentence": m.get("sentence_furigana") or m.get("sentence"),
+            "audio": ", ".join(x for x in (m.get("word_audio"), m.get("sentence_audio")) if x) or None,
             "source": m.get("source"),
         }
         for mid, m in mappings.items()

@@ -163,6 +163,10 @@
             <div class="toggle review-amounts" role="group" id="review-amounts" aria-labelledby="review-amount-label"></div>
             <input type="number" class="review-custom" id="review-custom" min="1" inputmode="numeric" aria-labelledby="review-amount-label" hidden>
           </div>
+          <label class="review-check" id="review-autoplay-row">
+            <input type="checkbox" id="review-autoplay" checked>
+            <span id="review-autoplay-label">Reproducir el audio al voltear</span>
+          </label>
           <button type="button" class="review-btn is-main review-start" id="review-start"></button>
         </div>
 
@@ -175,6 +179,7 @@
           <div class="review-track"><span id="review-bar"></span></div>
           <div class="review-card" id="review-card" aria-live="polite">
             <div class="review-word" id="review-word" lang="ja"></div>
+            <p class="review-sentence" id="review-sentence" lang="ja" hidden></p>
             <div class="review-answer" id="review-answer" hidden></div>
           </div>
           <div class="review-actions" id="review-actions"></div>

@@ -24,13 +24,16 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
   - Filtros por estado, categoría (con subtipos: godan, ichidan, adjetivos い/な…), nivel JLPT (N5 a N1) y kanji compartido: picas el 学 de 学校 y ves 学生, 学ぶ, 学園…
   - Orden del mazo, recién aprendidas, más fallos, intervalo más largo o por lectura.
   - Botón **Abrir en Anki** en cada palabra, que abre su tarjeta en el explorador para editarla.
+  - Al picarle a una palabra ves su oración de ejemplo con furigana y traducción, con botones para escuchar el audio.
   - Desde Progreso, picarle a una categoría, a "Ver todas" o a un cuadro del mapa te lleva al diccionario ya filtrado.
 - En **Repasar** practicas con palabras al azar, sin tocar Anki:
   - Eliges **Te cuestan trabajo** o **Estás aprendiendo** (en aprendizaje o jóvenes), y cuántas: 10, 20, 50, todas u otra cantidad.
   - En **Te cuestan trabajo** eliges a partir de cuántos fallos: 1, 2, 3, 5 o más, o solo las **Difíciles** (8 fallos o más, el mismo criterio de Progreso y de Anki). Si tienes difíciles, esa opción viene elegida.
-  - Ves la palabra, la volteas para ver furigana, significado y categoría, y marcas si la sabías. Atajos: Espacio voltea, 1 = no la sabía, 2 = la sabía.
+  - Como en las tarjetas de Kaishi: al frente ves la palabra y abajo su **oración de ejemplo** con la palabra resaltada. Al voltear aparecen la furigana (de la palabra y de la oración), el significado, la traducción de la oración, la categoría y el nivel JLPT, y marcas si la sabías.
+  - **Audio**: al voltear suena la palabra y luego la oración, con el mismo reproductor que usa Anki (se puede apagar). Botones ▶ Palabra y ▶ Oración para repetirlo.
+  - Atajos: Espacio voltea, 1 = no la sabía, 2 = la sabía, R = repetir el audio.
   - Al final ves cuántas sabías, las que fallaste con su botón **Abrir en Anki**, y puedes repasar solo las falladas.
-  - Es solo práctica: **no cambia tus intervalos ni tus estadísticas de Anki**. No se manda nada a Anki salvo cuando pulsas "Abrir en Anki".
+  - Es solo práctica: **no cambia tus intervalos ni tus estadísticas de Anki**. A Anki solo se le pide reproducir el audio o abrir una tarjeta; nunca se registra un repaso.
 - Se adapta al modo claro u oscuro de Anki, y al español o inglés.
 
 ## Instalar
@@ -61,6 +64,7 @@ El complemento busca solo qué campo tiene la palabra, cuál la lectura y cuál 
 1. Primero por el nombre del campo. Reconoce Kaishi, Core 2k/6k, notas de Yomitan/Lapis, campos en japonés (単語, 読み, 意味) y más.
 2. Si los nombres no ayudan, mira el contenido de algunas notas: un campo corto con japonés es la palabra, uno solo con kana es la lectura y uno con letras latinas es el significado.
 3. Si la palabra trae furigana (`日本[にほん]`), saca de ahí la lectura.
+4. También busca la oración de ejemplo, su furigana, su traducción y los audios de palabra y oración (por ejemplo `Sentence`, `Sentence Furigana`, `Sentence Meaning`, `Word Audio` y `Sentence Audio` en Kaishi; `Expression`, `Sentence-English` y `Vocabulary-Audio` en Core 2k/6k).
 
 En la parte de abajo del panel, **Cómo se leyó tu mazo** te dice qué campos usó. Si se equivocó, corrígelo en **Herramientas › Complementos › Configuración** con `field_mapping` (ver [`config.md`](anki_diccionario/config.md)).
 
