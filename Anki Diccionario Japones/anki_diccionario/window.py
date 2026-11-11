@@ -93,7 +93,7 @@ class DashboardDialog(QDialog):
         self.web.stdHtml(
             body,
             css=[f"{base}/dashboard.css"],
-            js=[f"{base}/dictionary.js", f"{base}/dashboard.js"],
+            js=[f"{base}/dictionary.js", f"{base}/review.js", f"{base}/dashboard.js"],
             context=self,
         )
 

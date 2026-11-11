@@ -970,6 +970,244 @@ body.nightMode,
 .dict-empty h2 { font-size: 18px; margin-bottom: 6px; }
 .dict-empty p { color: var(--ink-2); margin-bottom: 10px; }
 
+/* ---------- Pestaña Repasar (práctica libre, no toca Anki) ---------- */
+
+.review { max-width: 680px; margin: 0 auto; padding-bottom: 48px; }
+
+.adic .review-title { font-size: 22px; font-weight: 600; }
+
+.review-intro {
+  margin-top: 6px;
+  color: var(--ink-2);
+  max-width: 60ch;
+}
+
+.review-label {
+  margin: 24px 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--ink-2);
+}
+
+.review-groups {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
+.adic .review-group,
+.adic .review-group:hover,
+.adic .review-group:active {
+  display: grid;
+  gap: 4px;
+  padding: 16px 18px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--sheet);
+  text-align: left;
+  cursor: pointer;
+}
+
+.adic .review-group:hover { border-color: var(--st-young); }
+
+.adic .review-group[aria-pressed="true"],
+.adic .review-group[aria-pressed="true"]:hover {
+  border-color: var(--st-young);
+  box-shadow: inset 0 0 0 1px var(--st-young);
+}
+
+.adic .review-group[disabled],
+.adic .review-group[disabled]:hover {
+  opacity: .55;
+  cursor: default;
+  border-color: var(--rule);
+  background: var(--sheet);
+  color: var(--ink);
+}
+
+.rg-title { font-size: 15px; font-weight: 600; color: var(--ink); }
+.rg-desc { font-size: 13px; color: var(--ink-2); }
+.rg-count { margin-top: 6px; font-size: 13px; font-weight: 600; color: var(--st-mature); }
+.review-group[disabled] .rg-count { color: var(--ink-3); font-weight: 400; }
+
+.review-amount-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.review-amounts { flex-wrap: wrap; }
+
+.adic .review-custom {
+  width: 96px;
+  height: 32px;
+  padding: 0 10px;
+  border: 1px solid var(--rule);
+  border-radius: 7px;
+  background: var(--sheet);
+  color: var(--ink);
+  font: inherit;
+}
+
+.adic .review-custom:focus-visible { outline: none; border-color: var(--st-young); box-shadow: 0 0 0 1px var(--st-young); }
+
+/* Botones del repaso */
+.adic .review-btn,
+.adic .review-btn:hover,
+.adic .review-btn:active {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid var(--rule);
+  border-radius: 10px;
+  background: var(--sheet);
+  color: var(--ink);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.adic .review-btn:hover { border-color: var(--st-young); }
+
+.adic .review-btn.is-main,
+.adic .review-btn.is-main:hover,
+.adic .review-btn.is-hit,
+.adic .review-btn.is-hit:hover {
+  border-color: var(--st-mature);
+  background: var(--st-mature);
+  color: var(--paper);
+}
+
+.adic .review-btn.is-main:hover,
+.adic .review-btn.is-hit:hover { filter: brightness(1.12); }
+
+.adic .review-btn.is-miss:hover { border-color: var(--st-leech); }
+
+.adic .review-btn[disabled],
+.adic .review-btn[disabled]:hover {
+  opacity: .5;
+  cursor: default;
+  filter: none;
+}
+
+.review-btn kbd {
+  min-width: 20px;
+  padding: 0 5px;
+  border-radius: 4px;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 18px;
+  opacity: .7;
+  box-shadow: inset 0 0 0 1px currentColor;
+}
+
+.adic .review-start { margin-top: 28px; }
+
+/* Sesión */
+.review-top {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  font-size: 13px;
+  color: var(--ink-2);
+}
+
+.review-progress { font-weight: 600; color: var(--ink); font-variant-numeric: tabular-nums; }
+.review-score { flex: 1; font-variant-numeric: tabular-nums; }
+
+.review-track {
+  height: 4px;
+  margin-top: 10px;
+  border-radius: 2px;
+  background: var(--st-new);
+  overflow: hidden;
+}
+
+.review-track span {
+  display: block;
+  height: 100%;
+  width: 0;
+  border-radius: 2px;
+  background: var(--st-young);
+  transition: width .25s ease;
+}
+
+.review-card {
+  display: grid;
+  align-content: center;
+  justify-items: center;
+  gap: 10px;
+  min-height: 300px;
+  margin-top: 20px;
+  padding: 40px 32px;
+  border: 1px solid var(--rule);
+  border-radius: 14px;
+  background: var(--sheet);
+  text-align: center;
+}
+
+.review-word {
+  font-family: var(--font-jp);
+  font-size: 60px;
+  font-weight: 700;
+  line-height: 1.5;
+  color: var(--ink);
+  overflow-wrap: anywhere;
+}
+
+.review-word rt { font-size: .32em; }
+
+/* La furigana ocupa su lugar desde el principio, pero no se ve hasta voltear */
+.review-card:not(.is-revealed) .review-word rt { visibility: hidden; }
+
+.review-answer { display: grid; gap: 8px; justify-items: center; }
+.review-reading { font-family: var(--font-jp); font-size: 18px; color: var(--ink-2); }
+.review-reading:empty { display: none; }
+.review-meaning { font-size: 20px; line-height: 1.4; color: var(--ink); max-width: 46ch; }
+.review-meta { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 6px 8px; margin-top: 4px; }
+.review-lapses { font-size: 12px; color: var(--ink-3); }
+
+.review-actions {
+  display: flex;
+  justify-content: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.review-actions .review-btn { flex: 1 1 0; max-width: 240px; }
+
+.review-keys {
+  margin-top: 10px;
+  text-align: center;
+  font-size: 12px;
+  color: var(--ink-3);
+}
+
+/* Resultado */
+.review-result-bar { margin-top: 14px; height: 8px; }
+
+.review-result-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.review-missed { list-style: none; padding: 0; }
+
+.review-missed li {
+  display: grid;
+  grid-template-columns: 140px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 16px;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--rule);
+}
+
+.review-missed .w { font-family: var(--font-jp); font-size: 20px; font-weight: 700; line-height: 1.7; }
+.review-missed .m { color: var(--ink-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.list-links { display: inline-flex; gap: 14px; }
+
 /* ---------- Ritmo y listas ---------- */
 
 .rhythm,
@@ -1126,6 +1364,10 @@ body.nightMode,
   .cat .segbar { grid-column: 1 / 3; grid-row: 2; }
   .cat-subs { grid-column: 1 / 3; }
   .entry-main { grid-template-columns: minmax(0, 1fr) auto; }
+  .review-groups { grid-template-columns: 1fr; }
+  .review-word { font-size: 44px; }
+  .review-missed li { grid-template-columns: minmax(0, 1fr) auto; }
+  .review-missed .m { grid-column: 1 / 3; grid-row: 2; }
   .entry-body { grid-column: 1 / 3; grid-row: 2; }
   .dict-selects { width: 100%; }
   .adic .dict-select select { max-width: none; flex: 1; }

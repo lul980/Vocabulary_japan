@@ -39,6 +39,7 @@ def build(data_json: str, dark: bool = False, lang: str = "es", anki: bool = Fal
 <body class="{body_class(dark, anki)}">
 {read("dashboard.html")}
 <script>{read("dictionary.js")}</script>
+<script>{read("review.js")}</script>
 <script>{read("dashboard.js")}</script>
 <script>AnkiDiccionario.render({safe_data});</script>
 </body>

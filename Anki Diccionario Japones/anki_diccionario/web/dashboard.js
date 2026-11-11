@@ -19,6 +19,8 @@
     es: {
       tabProgress: "Progreso",
       tabDictionary: "Diccionario",
+      tabReview: "Repasar",
+      reviewThese: "Repasarlas",
       catsTitle: "Por categoría",
       catsSub: "Cuántas sabes de cada tipo de palabra.",
       catsShow: "Ver todas",
@@ -105,6 +107,8 @@
     en: {
       tabProgress: "Progress",
       tabDictionary: "Dictionary",
+      tabReview: "Review",
+      reviewThese: "Review them",
       catsTitle: "By category",
       catsSub: "How many you know of each kind of word.",
       catsShow: "Show all",
@@ -199,6 +203,7 @@
   let animFrame = 0;
   let activeTab = "progress";
   let dict = null; // pestaña Diccionario (dictionary.js)
+  let review = null; // pestaña Repasar (review.js)
 
   const $ = (id) => document.getElementById(id);
   const send = (cmd) => { if (typeof window.pycmd === "function") window.pycmd(cmd); };
@@ -517,7 +522,7 @@
   // Pestañas (Progreso siempre es la principal)
   // ------------------------------------------------------------------
 
-  const TABS = ["progress", "dictionary"];
+  const TABS = ["progress", "dictionary", "review"];
 
   function showTab(name, focus) {
     activeTab = name;
@@ -798,6 +803,7 @@
 
     const hard = model.words.filter((w) => w.lapses > 0 && w.status !== "suspended")
       .sort((a, b) => (b.leech - a.leech) || (b.lapses - a.lapses)).slice(0, 6);
+    $("review-hard").hidden = !hard.length;
     $("hard-list").innerHTML = hard.length
       ? hard.map((w) => `<li><span class="w" lang="ja">${ruby(w.word, w.reading)}</span><span class="m">${esc(w.meaning)}</span><span class="d">${t.lapses(fmt(w.lapses))}</span></li>`).join("")
       : `<li class="list-empty">${esc(t.hardEmpty)}</li>`;
@@ -856,6 +862,7 @@
     if (!model.total) {
       showEmpty(t.noWordsTitle, t.noWordsBody);
       if (dict) dict.render(model);
+      if (review) review.render(model);
       renderSource();
       $("source").querySelector("details").open = true;
       return;
@@ -869,6 +876,7 @@
     renderWeeks();
     renderLists();
     if (dict) dict.render(model);
+    if (review) review.render(model);
     renderSource();
   }
 
@@ -899,6 +907,15 @@
         t: () => t,
       });
     }
+    if (window.AdicReview) {
+      review = window.AdicReview({
+        $, esc, fmt, send, ruby, tagLabels, showTab,
+        lang: () => lang,
+        t: () => t,
+        isActive: () => activeTab === "review",
+      });
+    }
+    $("review-hard").addEventListener("click", () => { if (review && model) review.open("hard"); });
     const openDict = (filters) => { if (dict && model) dict.open(filters); };
     $("cat-list").addEventListener("click", (ev) => {
       const link = ev.target.closest(".cat-link");

@@ -18,6 +18,7 @@
     <div class="tabs-inner">
       <button type="button" role="tab" id="tab-progress" aria-controls="panel-progress" aria-selected="true" data-i18n="tabProgress">Progreso</button>
       <button type="button" role="tab" id="tab-dictionary" aria-controls="panel-dictionary" aria-selected="false" tabindex="-1" data-i18n="tabDictionary">Diccionario</button>
+      <button type="button" role="tab" id="tab-review" aria-controls="panel-review" aria-selected="false" tabindex="-1" data-i18n="tabReview">Repasar</button>
     </div>
   </nav>
 
@@ -96,7 +97,10 @@
           <div class="wordlist">
             <div class="list-head">
               <h2 data-i18n="hardTitle">Te cuestan trabajo</h2>
-              <button type="button" class="link-button" id="see-hard" data-i18n="seeAll">Ver todas</button>
+              <span class="list-links">
+                <button type="button" class="link-button" id="review-hard" data-i18n="reviewThese">Repasarlas</button>
+                <button type="button" class="link-button" id="see-hard" data-i18n="seeAll">Ver todas</button>
+              </span>
             </div>
             <ol id="hard-list"></ol>
           </div>
@@ -140,6 +144,49 @@
           <h2 id="dict-empty-title"></h2>
           <p id="dict-empty-body"></p>
           <button type="button" class="link-button" id="dict-empty-clear"></button>
+        </div>
+      </section>
+    </div>
+    <div class="page tab-panel" id="panel-review" role="tabpanel" aria-labelledby="tab-review" hidden>
+      <section class="review" id="review">
+        <div id="review-setup">
+          <h2 class="review-title" id="review-setup-title">Repaso rápido</h2>
+          <p class="review-intro" id="review-setup-body"></p>
+          <h3 class="review-label" id="review-group-label"></h3>
+          <div class="review-groups" id="review-groups"></div>
+          <h3 class="review-label" id="review-amount-label"></h3>
+          <div class="review-amount-row">
+            <div class="toggle review-amounts" role="group" id="review-amounts" aria-labelledby="review-amount-label"></div>
+            <input type="number" class="review-custom" id="review-custom" min="1" inputmode="numeric" aria-labelledby="review-amount-label" hidden>
+          </div>
+          <button type="button" class="review-btn is-main review-start" id="review-start"></button>
+        </div>
+
+        <div id="review-session" hidden>
+          <div class="review-top">
+            <span class="review-progress" id="review-progress-text"></span>
+            <span class="review-score" id="review-score"></span>
+            <button type="button" class="link-button" id="review-finish"></button>
+          </div>
+          <div class="review-track"><span id="review-bar"></span></div>
+          <div class="review-card" id="review-card" aria-live="polite">
+            <div class="review-word" id="review-word" lang="ja"></div>
+            <div class="review-answer" id="review-answer" hidden></div>
+          </div>
+          <div class="review-actions" id="review-actions"></div>
+          <p class="review-keys" id="review-keys"></p>
+        </div>
+
+        <div id="review-result" hidden>
+          <h2 class="review-title" id="review-result-title"></h2>
+          <div class="segbar review-result-bar" id="review-result-bar"></div>
+          <p class="review-intro" id="review-result-body"></p>
+          <div class="review-result-actions">
+            <button type="button" class="review-btn is-main" id="review-retry"></button>
+            <button type="button" class="review-btn" id="review-again"></button>
+          </div>
+          <h3 class="review-label" id="review-missed-title"></h3>
+          <ol class="review-missed" id="review-missed"></ol>
         </div>
       </section>
     </div>

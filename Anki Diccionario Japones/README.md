@@ -6,12 +6,14 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
 
 ![Pestaña Diccionario](docs/vista-previa-diccionario.png)
 
+![Pestaña Repasar](docs/vista-previa-repaso.png)
+
 <sub>Vista previa con progreso de ejemplo sobre el mazo Kaishi 1.5k. También en [modo oscuro](docs/vista-previa-oscuro.png).</sub>
 
 ## Qué hace
 
 - Se abre con un clic desde **Diccionario** en la barra de menús (junto a Herramientas, Ayuda y otros complementos), desde el botón **Diccionario** junto a Estadísticas o desde **Herramientas › Diccionario japonés**.
-- La ventana tiene pestañas: **Progreso** es la página principal y siempre abre primero; **Diccionario** tiene la lista completa de tus palabras.
+- La ventana tiene pestañas: **Progreso** es la página principal y siempre abre primero; **Diccionario** tiene la lista completa de tus palabras; **Repasar** es para practicar.
 - Cuenta tus palabras por estado: sabidas, jóvenes, aprendiendo, pendientes y suspendidas, y marca las difíciles.
 - Dibuja tu mazo completo como un mapa: cada cuadro es una palabra y se tiñe de índigo más oscuro conforme la aprendes. Al pasar el cursor ves la palabra, su lectura, su significado y su intervalo.
 - Clasifica cada palabra por categoría gramatical con JMdict (verbos godan, ichidan e irregulares, sustantivos, adjetivos い y な, adverbios, partículas…) y te dice cuántas sabes de cada una. La sección **Por categoría** aparece como una tira con tus tres categorías más grandes; al picarle se despliega completa.
@@ -23,6 +25,11 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
   - Orden del mazo, recién aprendidas, más fallos, intervalo más largo o por lectura.
   - Botón **Abrir en Anki** en cada palabra, que abre su tarjeta en el explorador para editarla.
   - Desde Progreso, picarle a una categoría, a "Ver todas" o a un cuadro del mapa te lleva al diccionario ya filtrado.
+- En **Repasar** practicas con palabras al azar, sin tocar Anki:
+  - Eliges **Te cuestan trabajo** (las que has fallado alguna vez) o **Estás aprendiendo** (en aprendizaje o jóvenes), y cuántas: 10, 20, 50, todas u otra cantidad.
+  - Ves la palabra, la volteas para ver furigana, significado y categoría, y marcas si la sabías. Atajos: Espacio voltea, 1 = no la sabía, 2 = la sabía.
+  - Al final ves cuántas sabías, las que fallaste con su botón **Abrir en Anki**, y puedes repasar solo las falladas.
+  - Es solo práctica: **no cambia tus intervalos ni tus estadísticas de Anki**. No se manda nada a Anki salvo cuando pulsas "Abrir en Anki".
 - Se adapta al modo claro u oscuro de Anki, y al español o inglés.
 
 ## Instalar
@@ -87,7 +94,7 @@ Anki Diccionario Japones/
 │   ├── jlpt.py              nivel JLPT de cada palabra
 │   ├── data/                índices de categorías (JMdict) y niveles JLPT
 │   ├── config.json / .md    configuración y su explicación
-│   └── web/                 la página del panel: dashboard.* (Progreso) y dictionary.js (Diccionario)
+│   └── web/                 la página del panel: dashboard.* (Progreso), dictionary.js (Diccionario) y review.js (Repasar)
 ├── dev/                     herramientas para probar sin abrir Anki
 ├── docs/                    capturas
 └── dist/                    el .ankiaddon listo para instalar
@@ -124,7 +131,7 @@ python dev/package.py
 - [x] **Parte 1**: leer el mazo, detectar campos y mostrar el progreso
 - [x] **Parte 2**: pestañas en la ventana (Progreso siempre es la página principal) y categorías gramaticales automáticas con JMdict (verbos godan/ichidan, adjetivos い/な, sustantivos…), con varias etiquetas por palabra y una sección "Por categoría" en Progreso
 - [x] **Parte 3**: pestaña Diccionario con todas las palabras, búsqueda (kanji, kana, rōmaji, significado), filtros por estado, categoría, nivel JLPT y kanji compartido, y botón para abrir la tarjeta en Anki
-- [ ] **Parte 4**: repaso rápido dentro del complemento: eliges "Te cuestan trabajo" o "Estás aprendiendo", cuántas palabras quieres repasar, y se eligen al azar
+- [x] **Parte 4**: repaso rápido dentro del complemento: eliges "Te cuestan trabajo" o "Estás aprendiendo", cuántas palabras quieres repasar, y se eligen al azar (práctica libre, no cambia nada en Anki)
 - [ ] **Parte 5**: configuración para personalizar el complemento: color de fondo o una imagen propia como fondo
 - [ ] **Parte 6**: exportar a una página web aparte
 
