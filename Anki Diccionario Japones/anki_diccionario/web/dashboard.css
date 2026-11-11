@@ -1031,6 +1031,22 @@ body.nightMode,
 .review-group[disabled] .rg-count { color: var(--ink-3); font-weight: 400; }
 
 .review-amount-row { display: flex; flex-wrap: wrap; align-items: center; gap: 12px; }
+.review-mins { flex-wrap: wrap; }
+
+.adic .review-mins button .n {
+  margin-left: 4px;
+  color: var(--ink-3);
+  font-variant-numeric: tabular-nums;
+}
+
+.adic .review-mins button[aria-pressed="true"] .n { color: var(--ink-2); }
+
+.adic .toggle button[disabled],
+.adic .toggle button[disabled]:hover {
+  opacity: .45;
+  cursor: default;
+  color: var(--ink-2);
+}
 .review-amounts { flex-wrap: wrap; }
 
 .adic .review-custom {

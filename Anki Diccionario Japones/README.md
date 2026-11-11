@@ -26,7 +26,8 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
   - Botón **Abrir en Anki** en cada palabra, que abre su tarjeta en el explorador para editarla.
   - Desde Progreso, picarle a una categoría, a "Ver todas" o a un cuadro del mapa te lleva al diccionario ya filtrado.
 - En **Repasar** practicas con palabras al azar, sin tocar Anki:
-  - Eliges **Te cuestan trabajo** (las que has fallado alguna vez) o **Estás aprendiendo** (en aprendizaje o jóvenes), y cuántas: 10, 20, 50, todas u otra cantidad.
+  - Eliges **Te cuestan trabajo** o **Estás aprendiendo** (en aprendizaje o jóvenes), y cuántas: 10, 20, 50, todas u otra cantidad.
+  - En **Te cuestan trabajo** eliges a partir de cuántos fallos: 1, 2, 3, 5 o más, o solo las **Difíciles** (8 fallos o más, el mismo criterio de Progreso y de Anki). Si tienes difíciles, esa opción viene elegida.
   - Ves la palabra, la volteas para ver furigana, significado y categoría, y marcas si la sabías. Atajos: Espacio voltea, 1 = no la sabía, 2 = la sabía.
   - Al final ves cuántas sabías, las que fallaste con su botón **Abrir en Anki**, y puedes repasar solo las falladas.
   - Es solo práctica: **no cambia tus intervalos ni tus estadísticas de Anki**. No se manda nada a Anki salvo cuando pulsas "Abrir en Anki".

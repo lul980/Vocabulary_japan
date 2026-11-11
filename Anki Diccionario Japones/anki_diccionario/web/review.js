@@ -16,9 +16,15 @@
       setupBody: "Practica aquí mismo con palabras al azar. Es solo práctica: no cambia tus intervalos ni tus estadísticas de Anki.",
       groupLabel: "Qué quieres repasar",
       groups: {
-        hard: ["Te cuestan trabajo", "Palabras que has fallado al menos una vez."],
+        hard: ["Te cuestan trabajo", ""],
         learning: ["Estás aprendiendo", "Palabras en aprendizaje o todavía jóvenes."],
       },
+      hardDesc: (min, leech) => (min === "leech"
+        ? `Marcadas como difíciles: ${leech} fallos o más.`
+        : min === 1 ? "Palabras que has fallado al menos una vez." : `Palabras que has fallado ${min} veces o más.`),
+      minLabel: "A partir de cuántos fallos",
+      minN: (n) => `${n} o más`,
+      minLeech: (leech) => `Difíciles (${leech} o más)`,
       available: (n) => (n === 1 ? "1 palabra" : `${n} palabras`),
       emptyGroup: "Todavía no tienes palabras aquí.",
       amountLabel: "Cuántas palabras",
@@ -51,9 +57,15 @@
       setupBody: "Practice right here with random words. It's practice only: it doesn't change your intervals or your Anki statistics.",
       groupLabel: "What to review",
       groups: {
-        hard: ["Giving you trouble", "Words you've failed at least once."],
+        hard: ["Giving you trouble", ""],
         learning: ["Still learning", "Words in learning or still young."],
       },
+      hardDesc: (min, leech) => (min === "leech"
+        ? `Marked as difficult: ${leech}+ lapses.`
+        : min === 1 ? "Words you've failed at least once." : `Words you've failed ${min} times or more.`),
+      minLabel: "Minimum lapses",
+      minN: (n) => `${n}+`,
+      minLeech: (leech) => `Difficult (${leech}+)`,
       available: (n) => (n === 1 ? "1 word" : `${n} words`),
       emptyGroup: "No words here yet.",
       amountLabel: "How many words",
@@ -99,14 +111,37 @@
     const { $, esc, fmt, send } = ctx;
     let r = I18N.es;
     let words = [];
-    const setup = { group: "hard", amount: 20, custom: "" };
+    // minLapses: 1, 2, 3, 5 o "leech" (las "Difíciles"); null = elegir solo
+    const setup = { group: "hard", amount: 20, custom: "", minLapses: null };
+    let leechLapses = 8;
     // Sesión en curso: solo vive en memoria, nunca se manda a Anki
     let session = null; // { cards, index, revealed, results: [{w, knew}] }
 
     // ---------- grupos ----------
 
+    // Palabras con al menos `min` fallos ("leech" = las marcadas como difíciles)
+    function hardPool(min) {
+      return words.filter((w) => w.status !== "suspended" &&
+        (min === "leech" ? w.leech : w.lapses >= min || w.leech));
+    }
+
+    function minOptions() {
+      const nums = [1, 2, 3, 5].filter((n) => n < leechLapses);
+      return nums.map((n) => [n, r.minN(n), hardPool(n).length])
+        .concat([["leech", r.minLeech(leechLapses), hardPool("leech").length]]);
+    }
+
+    // Por defecto: las "Difíciles" si hay; si no, desde 1 fallo
+    function currentMin() {
+      const opts = minOptions();
+      const chosen = opts.find(([key]) => key === setup.minLapses);
+      if (chosen && chosen[2] > 0) return chosen[0];
+      const leech = opts.find(([key]) => key === "leech");
+      return leech && leech[2] > 0 ? "leech" : 1;
+    }
+
     function pool(group) {
-      if (group === "hard") return words.filter((w) => w.status !== "suspended" && (w.lapses > 0 || w.leech));
+      if (group === "hard") return hardPool(currentMin());
       return words.filter((w) => w.status === "learning" || w.status === "young");
     }
 
@@ -137,15 +172,24 @@
         setup.group = setup.group === "hard" ? "learning" : "hard";
       }
 
+      const min = currentMin();
       $("review-groups").innerHTML = ["hard", "learning"].map((g) => {
         const n = pool(g).length;
-        const [title, desc] = r.groups[g];
+        const [title, fixedDesc] = r.groups[g];
+        const desc = g === "hard" ? r.hardDesc(min, leechLapses) : fixedDesc;
         return `<button type="button" class="review-group" data-group="${g}" aria-pressed="${setup.group === g}"${n ? "" : " disabled"}>
             <span class="rg-title">${esc(title)}</span>
             <span class="rg-desc">${esc(desc)}</span>
             <span class="rg-count">${n ? esc(r.available(fmt(n))) : esc(r.emptyGroup)}</span>
           </button>`;
       }).join("");
+
+      // A partir de cuántos fallos (solo para "Te cuestan trabajo")
+      $("review-min-block").hidden = setup.group !== "hard";
+      $("review-min-label").textContent = r.minLabel;
+      $("review-mins").innerHTML = minOptions().map(([key, label, n]) =>
+        `<button type="button" data-min="${key}" aria-pressed="${key === min}"${n ? "" : " disabled"}>${esc(label)} <span class="n">${fmt(n)}</span></button>`
+      ).join("");
 
       const available = pool(setup.group).length;
       const chips = AMOUNTS.filter((n) => n < available).map((n) =>
@@ -262,6 +306,12 @@
         setup.group = btn.dataset.group;
         renderSetup();
       });
+      $("review-mins").addEventListener("click", (ev) => {
+        const btn = ev.target.closest("button[data-min]");
+        if (!btn || btn.disabled) return;
+        setup.minLapses = btn.dataset.min === "leech" ? "leech" : Number(btn.dataset.min);
+        renderSetup();
+      });
       $("review-amounts").addEventListener("click", (ev) => {
         const btn = ev.target.closest("button[data-amount]");
         if (!btn) return;
@@ -324,6 +374,7 @@
     function render(model) {
       r = I18N[ctx.lang()] || I18N.es;
       words = model.words;
+      leechLapses = Number((model.data.settings || {}).leech_lapses) || 8;
       // Si hay un repaso a la mitad, no lo interrumpimos al pulsar Actualizar
       if (!session) renderSetup();
     }
