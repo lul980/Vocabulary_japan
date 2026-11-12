@@ -35,11 +35,14 @@ def build(data_json: str, dark: bool = False, lang: str = "es", anki: bool = Fal
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>Diccionario japonés</title>
 {anki_css(anki)}<style>{read("dashboard.css")}</style>
+<style>{read("themes.css")}</style>
 </head>
 <body class="{body_class(dark, anki)}">
 {read("dashboard.html")}
+<script>{read("themes.js")}</script>
 <script>{read("dictionary.js")}</script>
 <script>{read("review.js")}</script>
+<script>{read("settings.js")}</script>
 <script>{read("dashboard.js")}</script>
 <script>AnkiDiccionario.render({safe_data});</script>
 </body>

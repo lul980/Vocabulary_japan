@@ -12,6 +12,7 @@ import json
 import os
 import sys
 import tempfile
+import time
 import zipfile
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -21,6 +22,7 @@ sys.path.insert(0, HERE)
 from anki_diccionario import fields  # noqa: E402
 from anki_diccionario.categories import Classifier, groups_for  # noqa: E402
 from anki_diccionario.jlpt import JlptIndex  # noqa: E402
+from anki_diccionario import settings as adic_settings  # noqa: E402
 from anki_diccionario.collector import (  # noqa: E402
     build_dashboard_data, card_status, resolve_deck_id, summarize, word_status,
 )
@@ -47,6 +49,17 @@ def test_fields() -> bool:
               [["私は", "", 0], ["勉強", "", 1], ["します。", "", 0]]),
         check("archivos de audio (sin rutas)", fields.sound_files("[sound:a.mp3] [sound:../x/b.ogg]"), ["a.mp3", "b.ogg"]),
     ]
+
+    print("Campos elegidos a mano (Configuración)")
+    kaishi = ["Word", "Word Reading", "Word Meaning", "Word Audio", "Sentence", "Sentence Meaning", "Sentence Audio"]
+    got = fields.detect_fields(kaishi, [], override={"sentence": "Sentence Meaning"})
+    results.append(check("cambiar uno deja los demás automáticos",
+                         (got["word"], got["reading"], got["sentence"], got["source"]),
+                         ("Word", "Word Reading", "Sentence Meaning", "config")))
+    got = fields.detect_fields(kaishi, [], override={"word_audio": ""})
+    results.append(check("\"ninguno\" apaga el campo", (got["word_audio"], got["sentence_audio"]), (None, "Sentence Audio")))
+    got = fields.detect_fields(kaishi, [], override={"word": "No existe"})
+    results.append(check("un campo que ya no existe se ignora", (got["word"], got["source"]), ("Word", "name")))
 
     print("Oración y audio por nombre de campo")
     extras = {
@@ -229,6 +242,83 @@ def test_cache_released() -> bool:
     ])
 
 
+def test_settings() -> bool:
+    """Parte 5: lo que manda el panel de Configuración se valida antes de guardarse."""
+    print("Configuración (temas, fondo, campos)")
+    import build_themes
+    S = adic_settings
+    oks = [check("temas iguales en Python y en build_themes", list(S.THEME_IDS), list(build_themes.THEMES))]
+
+    cfg, refresh = S.apply_settings({}, {"theme": "nord", "mode": "dark"})
+    oks += [check("tema y modo", (cfg["theme"], cfg["mode"]), ("nord", "dark")),
+            check("cambiar el tema no relee el mazo", refresh, False)]
+    cfg2, refresh = S.apply_settings(cfg, {"theme": "<b>", "mode": "neón", "language": "fr"})
+    oks += [check("valores desconocidos se ignoran", (cfg2["theme"], cfg2["mode"], cfg2["language"]), ("nord", "dark", "auto")),
+            check("sin cambios no relee", refresh, False)]
+    cfg3, refresh = S.apply_settings(cfg, {"mature_interval_days": "9999", "leech_lapses": -3})
+    oks += [check("números se ajustan al rango", (cfg3["mature_interval_days"], cfg3["leech_lapses"]), (365, 1)),
+            check("cambiar números relee el mazo", refresh, True)]
+    _, refresh = S.apply_settings({"mature_interval_days": 21}, {"mature_interval_days": 21})
+    oks.append(check("mismo valor no relee", refresh, False))
+
+    cfg4, _ = S.apply_settings({}, {"background": {"type": "color", "color": "#AABBCC", "veil": 300, "blur": "x", "fit": "raro"}})
+    bg = cfg4["background"]
+    oks += [check("fondo de color", (bg["type"], bg["color"]), ("color", "#aabbcc")),
+            check("velo y desenfoque en rango", (bg["veil"], bg["blur"], bg["fit"]), (95, 0, "cover"))]
+    cfg5, _ = S.apply_settings({}, {"background": {"type": "image", "color": "red; x"}})
+    oks += [check("imagen sin archivo -> tema", cfg5["background"]["type"], "theme"),
+            check("color inválido se ignora", cfg5["background"]["color"], "#e5e9f0")]
+
+    names = ["Word", "Sentence", "Audio"]
+    m = S.apply_field_mapping({}, "Kaishi", {"sentence": "Sentence", "word_audio": "", "meaning": "NoExiste",
+                                           "word": "", "inventado": "Word", "reading": None}, names)
+    oks.append(check("campos elegidos", m["field_mapping"], {"Kaishi": {"sentence": "Sentence", "word_audio": ""}}))
+    m = S.apply_field_mapping(m, "Kaishi", {"reading": None}, names)
+    oks.append(check("todo automático borra el tipo", m["field_mapping"], {}))
+    detected = fields.detect_fields(["Word", "Word Reading", "Word Meaning", "Sentence", "Word Audio"], [],
+                                    override={"sentence": "", "word_audio": "Word Audio", "meaning": "Nada"})
+    oks += [check("override: ninguno", detected["sentence"], None),
+            check("override: campo elegido", detected["word_audio"], "Word Audio"),
+            check("override: campo inexistente se ignora", detected["meaning"], "Word Meaning"),
+            check("override: origen", detected["source"], "config")]
+
+    full = {"deck": "Kaishi", "theme": "gruvbox", "mode": "light", "leech_lapses": 4,
+            "field_mapping": {"X": {"sentence": ""}}, "background": {"type": "color", "color": "#000000"}}
+    a = S.reset(full, "appearance")
+    oks += [check("reset apariencia", (a["theme"], a["mode"], a["background"]["type"]), ("aizome", "auto", "theme")),
+            check("reset apariencia conserva lo demás", (a["leech_lapses"], a["field_mapping"]), (4, {"X": {"sentence": ""}}))]
+    b = S.reset(full, "all")
+    oks.append(check("reset todo conserva el mazo", (b["deck"], b["leech_lapses"], b["field_mapping"]), ("Kaishi", 8, {})))
+
+    user = tempfile.mkdtemp(prefix="adic-user-")
+    src = os.path.join(tempfile.mkdtemp(prefix="adic-pics-"), "foto.JPEG")
+    with open(src, "wb") as fh:
+        fh.write(b"\xff\xd8\xff")
+    open(os.path.join(user, "jmdict_pos-1-2.sqlite"), "w").close()
+    first = S.store_background(src, user)
+    time.sleep(0.002)  # el nombre lleva los milisegundos
+    second = S.store_background(src, user)
+    try:
+        S.store_background(os.path.join(user, "nota.txt"), user)
+        bad = "aceptó"
+    except ValueError:
+        bad = "rechazó"
+    files = sorted(os.listdir(user))
+    oks += [check("imagen copiada con nombre nuevo", (first.endswith(".jpg"), first != second), (True, True)),
+            check("solo queda la última imagen", files, sorted([second, "jmdict_pos-1-2.sqlite"])),
+            check("archivo que no es imagen", bad, "rechazó")]
+
+    ui = S.appearance({"background": {"type": "image", "image": second}}, "/_addons/x", user)
+    oks.append(check("url del fondo", ui["background"]["url"], f"/_addons/x/user_files/{second}"))
+    ui = S.appearance({"theme": "borrado", "background": {"type": "image", "image": "../../secreto.png"}}, "/_addons/x", user)
+    oks.append(check("nombre raro o tema borrado -> por defecto", (ui["theme"], ui["background"]["type"], ui["background"]["url"]), ("aizome", "theme", "")))
+    S.clear_backgrounds(user)
+    oks.append(check("quitar fondo no toca la caché", os.listdir(user), ["jmdict_pos-1-2.sqlite"]))
+    with open(os.path.join(os.path.dirname(HERE), "anki_diccionario", "config.json"), encoding="utf-8") as fh:
+        oks.append(check("config.json = valores por defecto", json.load(fh), S.DEFAULTS))
+    return all(oks)
+
+
 def open_collection(path: str) -> FakeCollection:
     if path.endswith(".apkg") or path.endswith(".colpkg"):
         tmp = tempfile.mkdtemp(prefix="adic-")
@@ -258,7 +348,7 @@ def test_deck(path: str, json_out: str = "") -> None:
 
 
 if __name__ == "__main__":
-    ok = test_fields() & test_categories() & test_jlpt() & test_cache_released()
+    ok = test_fields() & test_categories() & test_jlpt() & test_cache_released() & test_settings()
     args = [a for a in sys.argv[1:] if not a.startswith("--")]
     json_out = ""
     if "--json" in sys.argv:

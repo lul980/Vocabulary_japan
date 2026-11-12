@@ -291,24 +291,34 @@ def detect_fields(field_names: Sequence[str], samples: List[List[str]],
     Regresa también "source" para mostrarle al usuario de dónde salió.
     """
     names = list(field_names)
-    result = _detect_main(names, samples, sort_field, override)
-    extras = detect_extras(names, taken=[result.get(k) for k in ("word", "reading", "furigana", "meaning")])
-    for key in extras:
-        if override and override.get(key) in names:
-            extras[key] = override[key]
-    result.update(extras)
+    result = _detect_main(names, samples, sort_field)
+    result.update(detect_extras(names, taken=[result.get(k) for k in ("word", "reading", "furigana", "meaning")]))
+
+    # Lo que elijas en Configuración gana; lo demás se queda automático.
+    # "" significa "ninguno" (por ejemplo, para no usar un campo de audio).
+    applied = False
+    for key, value in (override or {}).items():
+        if key not in MAPPABLE:
+            continue
+        if value == "" or value is None:
+            result[key] = None
+            applied = True
+        elif value in names:
+            result[key] = value
+            applied = True
+    if applied:
+        result["source"] = "config"
+    if not result.get("word"):
+        result["word"] = sort_field if sort_field in names else (names[0] if names else None)
     return result
 
 
-def _detect_main(names: List[str], samples: List[List[str]], sort_field: Optional[str],
-                 override: Optional[Dict[str, str]]) -> Dict[str, Optional[str]]:
-    if override:
-        chosen = {k: (override.get(k) if override.get(k) in names else None)
-                  for k in ("word", "reading", "furigana", "meaning")}
-        if chosen["word"]:
-            chosen["source"] = "config"
-            return chosen
+# Campos que se pueden elegir a mano (Configuración o field_mapping en config.json)
+MAPPABLE = ("word", "reading", "furigana", "meaning", "sentence", "sentence_furigana",
+            "sentence_meaning", "word_audio", "sentence_audio")
 
+
+def _detect_main(names: List[str], samples: List[List[str]], sort_field: Optional[str]) -> Dict[str, Optional[str]]:
     result = detect_by_name(names)
     result["source"] = "name"
 

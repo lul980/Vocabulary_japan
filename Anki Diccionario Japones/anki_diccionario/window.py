@@ -14,21 +14,28 @@ import os
 from typing import Any, Dict, Optional
 
 from aqt import gui_hooks, mw
-from aqt.qt import QAction, QDialog, QVBoxLayout, qconnect
+from aqt.qt import QAction, QDialog, QFileDialog, QVBoxLayout, qconnect
 from aqt.utils import restoreGeom, saveGeom, showWarning
 from aqt.webview import AnkiWebView
 
+from . import settings as adic_settings
 from .collector import build_dashboard_data, resolve_deck_id
 
 ADDON_DIR = os.path.dirname(os.path.abspath(__file__))
 GEOM_KEY = "anki_diccionario_dashboard"
-WEB_EXPORTS = r"web/.*\.(css|js|html|svg|png|woff2?)$"
+USER_DIR = os.path.join(ADDON_DIR, "user_files")
+# La página puede cargar sus archivos web y la imagen de fondo que elijas
+WEB_EXPORTS = r"(web/.*\.(css|js|html|svg|png|woff2?)|user_files/background-\d+\.(png|jpe?g|webp|gif|bmp))$"
 
 LABELS = {
     "es": {"menu": "Diccionario japonés", "toolbar": "Diccionario",
-           "tip": "Ver tu progreso de vocabulario", "error": "No se pudo leer el mazo:"},
+           "tip": "Ver tu progreso de vocabulario", "error": "No se pudo leer el mazo:",
+           "pick": "Elige una imagen de fondo", "images": "Imágenes",
+           "bad_image": "No se pudo usar esa imagen:"},
     "en": {"menu": "Japanese dictionary", "toolbar": "Dictionary",
-           "tip": "See your vocabulary progress", "error": "Couldn't read the deck:"},
+           "tip": "See your vocabulary progress", "error": "Couldn't read the deck:",
+           "pick": "Choose a background image", "images": "Images",
+           "bad_image": "Couldn't use that image:"},
 }
 
 _dialog: Optional["DashboardDialog"] = None
@@ -93,8 +100,9 @@ class DashboardDialog(QDialog):
             body = fh.read()
         self.web.stdHtml(
             body,
-            css=[f"{base}/dashboard.css"],
-            js=[f"{base}/dictionary.js", f"{base}/review.js", f"{base}/dashboard.js"],
+            css=[f"{base}/dashboard.css", f"{base}/themes.css"],
+            js=[f"{base}/themes.js", f"{base}/dictionary.js", f"{base}/review.js",
+                f"{base}/settings.js", f"{base}/dashboard.js"],
             context=self,
         )
 
@@ -104,6 +112,10 @@ class DashboardDialog(QDialog):
     #   adic:browse:<nota>        "Abrir en Anki"
     #   adic:play:<nota>:<cuál>   audio de la palabra ("word", "sentence" o "all")
     #   adic:stop                 parar el audio
+    #   adic:settings:<json>      cambios de Configuración (se validan en settings.py)
+    #   adic:fields:<json>        campos elegidos a mano para un tipo de nota
+    #   adic:pickbg / clearbg     elegir o quitar la imagen de fondo
+    #   adic:reset:<appearance|all>
     def _on_bridge_cmd(self, cmd: str) -> Any:
         if cmd == "adic:refresh":
             self.refresh()
@@ -128,15 +140,81 @@ class DashboardDialog(QDialog):
                 play_audio(self._audio.get(int(parts[2]), {}), parts[3])
         elif cmd == "adic:stop":
             stop_audio()
+        elif cmd.startswith("adic:settings:"):
+            self._save_settings(_json_arg(cmd, "adic:settings:"))
+        elif cmd.startswith("adic:fields:"):
+            self._save_fields(_json_arg(cmd, "adic:fields:"))
+        elif cmd == "adic:pickbg":
+            self._pick_background()
+        elif cmd == "adic:clearbg":
+            adic_settings.clear_backgrounds(USER_DIR)
+            config, _ = adic_settings.apply_settings(get_config(), {"background": {"type": "theme"}})
+            config["background"]["image"] = ""
+            save_config(config)
+            self._send_appearance()
+        elif cmd in ("adic:reset:appearance", "adic:reset:all"):
+            config = adic_settings.reset(get_config(), cmd.rsplit(":", 1)[1])
+            if cmd.endswith("all") or not config["background"].get("image"):
+                adic_settings.clear_backgrounds(USER_DIR)
+            save_config(config)
+            self._send_appearance()
+            if cmd.endswith("all"):
+                self.refresh()
         return None
 
+    # ---------- Configuración (⚙) ----------
+
+    def _save_settings(self, changes: Any) -> None:
+        if not isinstance(changes, dict):
+            return
+        config, needs_refresh = adic_settings.apply_settings(get_config(), changes)
+        save_config(config)
+        if needs_refresh:
+            self.refresh()  # cambian números, idioma o campos: hay que releer el mazo
+        else:
+            self._send_appearance()
+
+    def _save_fields(self, payload: Any) -> None:
+        if not isinstance(payload, dict) or not isinstance(payload.get("notetype"), str):
+            return
+        mapping = payload.get("mapping") if isinstance(payload.get("mapping"), dict) else {}
+        names = payload.get("names") if isinstance(payload.get("names"), list) else None
+        config = adic_settings.apply_field_mapping(get_config(), payload["notetype"], mapping, names)
+        save_config(config)
+        self.refresh()
+
+    def _pick_background(self) -> None:
+        text = labels()
+        path, _ = QFileDialog.getOpenFileName(
+            self, text["pick"], os.path.expanduser("~"),
+            f"{text['images']} (*.png *.jpg *.jpeg *.webp *.gif *.bmp)",
+        )
+        if not path:
+            return
+        try:
+            name = adic_settings.store_background(path, USER_DIR)
+        except (OSError, ValueError) as error:
+            showWarning(f"{text['bad_image']}\n{error}", parent=self)
+            return
+        config = adic_settings.with_defaults(get_config())
+        config["background"]["image"] = name
+        config["background"]["type"] = "image"
+        save_config(config)
+        self._send_appearance()
+
+    def _send_appearance(self) -> None:
+        ui = appearance_for(get_config())
+        self.web.eval(f"window.AnkiDiccionario && AnkiDiccionario.applyAppearance({json.dumps(ui)});")
+
     def refresh(self, deck_id: Optional[int] = None) -> None:
-        config = get_config()
+        config = adic_settings.with_defaults(get_config())
+        ui = appearance_for(config)
 
         def op(col) -> Dict[str, Any]:
             did = deck_id or resolve_deck_id(col, config.get("deck", ""))
             data = build_dashboard_data(col, did, config)
             data["language"] = resolve_language(config.get("language", "auto"))
+            data["ui"] = ui
             return data
 
         try:
@@ -170,6 +248,18 @@ class DashboardDialog(QDialog):
             pass
         _dialog = None
         super().reject()
+
+
+def _json_arg(cmd: str, prefix: str) -> Any:
+    try:
+        return json.loads(cmd[len(prefix):])
+    except ValueError:
+        return None
+
+
+def appearance_for(config: Dict[str, Any]) -> Dict[str, Any]:
+    package = mw.addonManager.addonFromModule(__name__)
+    return adic_settings.appearance(config, f"/_addons/{package}", USER_DIR)
 
 
 def play_audio(audio: Dict[str, list], which: str) -> None:

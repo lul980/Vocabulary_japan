@@ -4,5 +4,15 @@
     "mature_interval_days": 21,
     "leech_lapses": 8,
     "word_status_mode": "all",
-    "field_mapping": {}
+    "field_mapping": {},
+    "theme": "aizome",
+    "mode": "auto",
+    "background": {
+        "type": "theme",
+        "color": "#e5e9f0",
+        "image": "",
+        "veil": 70,
+        "blur": 0,
+        "fit": "cover"
+    }
 }

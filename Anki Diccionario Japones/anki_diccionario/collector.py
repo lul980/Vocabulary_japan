@@ -17,7 +17,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from .categories import GROUPS, Classifier, shared_classifier
 from .jlpt import JlptIndex, shared_jlpt
-from .fields import detect_fields, extract_entry, has_japanese
+from .fields import MAPPABLE, detect_fields, extract_entry, has_japanese
 
 DATA_VERSION = 1
 
@@ -211,8 +211,12 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
         sort_idx = model.get("sortf", 0)
         sort_field = field_names[sort_idx] if 0 <= sort_idx < len(field_names) else None
         samples = [n["flds"].split("\x1f") for n in notes.values() if n["mid"] == mid][:60]
-        mapping = detect_fields(field_names, samples, sort_field, overrides.get(model.get("name", "")))
-        mappings[mid] = {"notetype": model.get("name", "?"), "names": field_names, **mapping}
+        override = overrides.get(model.get("name", ""))
+        mapping = detect_fields(field_names, samples, sort_field, override)
+        # Lo que detectaría solo (para mostrar "Automático (...)" en Configuración)
+        auto = detect_fields(field_names, samples, sort_field) if override else mapping
+        mappings[mid] = {"notetype": model.get("name", "?"), "names": field_names,
+                         "auto": {k: auto.get(k) for k in MAPPABLE}, **mapping}
 
     words: List[Dict[str, Any]] = []
     skipped = 0
@@ -293,6 +297,11 @@ def build_dashboard_data(col, deck_id: Optional[int], config: Optional[Dict[str,
             "sentence": m.get("sentence_furigana") or m.get("sentence"),
             "audio": ", ".join(x for x in (m.get("word_audio"), m.get("sentence_audio")) if x) or None,
             "source": m.get("source"),
+            # Para el panel de Configuración: campos del tipo de nota, qué se usa y qué eligió el usuario
+            "names": m.get("names", []),
+            "detected": {k: m.get(k) for k in MAPPABLE},
+            "auto": m.get("auto", {}),
+            "override": dict(overrides.get(m.get("notetype", ""), {})),
         }
         for mid, m in mappings.items()
     ]

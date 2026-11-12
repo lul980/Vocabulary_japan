@@ -20,6 +20,7 @@
       tabProgress: "Progreso",
       tabDictionary: "Diccionario",
       tabReview: "Repasar",
+      settings: "Configuración",
       reviewThese: "Repasarlas",
       catsTitle: "Por categoría",
       catsSub: "Cuántas sabes de cada tipo de palabra.",
@@ -108,6 +109,7 @@
       tabProgress: "Progress",
       tabDictionary: "Dictionary",
       tabReview: "Review",
+      settings: "Settings",
       reviewThese: "Review them",
       catsTitle: "By category",
       catsSub: "How many you know of each kind of word.",
@@ -204,6 +206,60 @@
   let activeTab = "progress";
   let dict = null; // pestaña Diccionario (dictionary.js)
   let review = null; // pestaña Repasar (review.js)
+  let settingsPanel = null; // Configuración (settings.js)
+
+  // ------------------------------------------------------------------
+  // Apariencia: tema, claro/oscuro y fondo propio
+  // ------------------------------------------------------------------
+
+  const DEFAULT_UI = {
+    theme: "aizome", mode: "auto", language: "auto",
+    background: { type: "theme", color: "#e5e9f0", url: "", veil: 70, blur: 0, fit: "cover" },
+  };
+  let currentUi = JSON.parse(JSON.stringify(DEFAULT_UI));
+
+  const isDark = () => currentUi.mode === "dark" ||
+    (currentUi.mode !== "light" && document.body.classList.contains("nightMode"));
+
+  function applyAppearance(ui) {
+    const next = JSON.parse(JSON.stringify(DEFAULT_UI));
+    if (ui) {
+      Object.keys(ui).forEach((k) => { if (k !== "background") next[k] = ui[k]; });
+      Object.assign(next.background, ui.background || {});
+    }
+    const known = (window.ADIC_THEMES || []).map((th) => th.id);
+    if (known.length && !known.includes(next.theme)) next.theme = "aizome";
+    const changed = JSON.stringify(next) !== JSON.stringify(currentUi);
+    currentUi = next;
+
+    const root = $("adic");
+    root.dataset.theme = next.theme;
+    root.classList.toggle("is-dark", isDark());
+
+    const bg = next.background;
+    const layer = $("adic-bg");
+    const veil = $("adic-veil");
+    const active = bg.type === "color" || (bg.type === "image" && !!bg.url);
+    root.classList.toggle("has-bg", active);
+    layer.hidden = !active;
+    veil.hidden = !active;
+    if (active) {
+      layer.style.backgroundColor = bg.type === "color" ? bg.color : "transparent";
+      layer.style.backgroundImage = bg.type === "image" ? `url("${encodeURI(bg.url)}")` : "none";
+      layer.style.backgroundSize = bg.fit === "tile" ? "auto" : "cover";
+      layer.style.backgroundRepeat = bg.fit === "tile" ? "repeat" : "no-repeat";
+      layer.style.filter = bg.blur ? `blur(${bg.blur}px)` : "none";
+      veil.style.opacity = String(Math.max(0, Math.min(95, Number(bg.veil) || 0)) / 100);
+    }
+    document.body.style.background = getComputedStyle(root).getPropertyValue("--paper").trim();
+
+    // El mapa del mazo se pinta en canvas: hay que volver a leer los colores
+    if (changed && model && model.total) {
+      setupGrid(false);
+      if (activeTab === "progress") renderWeeks();
+    }
+    if (settingsPanel) settingsPanel.refreshLook();
+  }
 
   const $ = (id) => document.getElementById(id);
   const send = (cmd) => { if (typeof window.pycmd === "function") window.pycmd(cmd); };
@@ -269,6 +325,10 @@
     document.querySelectorAll("[data-i18n]").forEach((el) => {
       const value = t[el.dataset.i18n];
       if (typeof value === "string") el.textContent = value;
+    });
+    document.querySelectorAll("[data-i18n-label]").forEach((el) => {
+      const value = t[el.dataset.i18nLabel];
+      if (typeof value === "string") { el.setAttribute("aria-label", value); el.title = value; }
     });
   }
 
@@ -567,7 +627,8 @@
   // Pestañas (Progreso siempre es la principal)
   // ------------------------------------------------------------------
 
-  const TABS = ["progress", "dictionary", "review"];
+  const TABS = ["progress", "dictionary", "review", "settings"];
+  const STRIP = ["progress", "dictionary", "review"]; // las que aparecen en la tira
 
   function showTab(name, focus) {
     if (activeTab === "review" && name !== "review") stopAudio();
@@ -575,11 +636,13 @@
     TABS.forEach((tab) => {
       const btn = $("tab-" + tab);
       const selected = tab === name;
-      btn.setAttribute("aria-selected", String(selected));
-      btn.tabIndex = selected ? 0 : -1;
       $("panel-" + tab).hidden = !selected;
+      if (!btn) return;
+      btn.setAttribute("aria-selected", String(selected));
+      btn.tabIndex = selected || (name === "settings" && tab === "progress") ? 0 : -1;
       if (selected && focus) btn.focus();
     });
+    $("open-settings").setAttribute("aria-pressed", String(name === "settings"));
     // El canvas no se puede medir mientras está oculto: se redibuja al volver
     if (name === "progress" && model && model.total) {
       drawGrid(1);
@@ -588,13 +651,14 @@
   }
 
   function wireTabs() {
-    TABS.forEach((tab) => {
+    STRIP.forEach((tab) => {
       $("tab-" + tab).addEventListener("click", () => showTab(tab, false));
     });
+    $("open-settings").addEventListener("click", () => showTab(activeTab === "settings" ? "progress" : "settings", false));
     $("tabs").addEventListener("keydown", (ev) => {
       if (ev.key !== "ArrowRight" && ev.key !== "ArrowLeft") return;
-      const i = TABS.indexOf(activeTab);
-      const next = TABS[(i + (ev.key === "ArrowRight" ? 1 : TABS.length - 1)) % TABS.length];
+      const i = Math.max(0, STRIP.indexOf(activeTab));
+      const next = STRIP[(i + (ev.key === "ArrowRight" ? 1 : STRIP.length - 1)) % STRIP.length];
       showTab(next, true);
     });
   }
@@ -890,6 +954,7 @@
 
   function render(data) {
     init();
+    applyAppearance(data.ui);
     lang = pickLanguage(data.language);
     t = I18N[lang];
     applyI18n();
@@ -909,6 +974,7 @@
       showEmpty(t.noWordsTitle, t.noWordsBody);
       if (dict) dict.render(model);
       if (review) review.render(model);
+      if (settingsPanel) settingsPanel.render(model);
       renderSource();
       $("source").querySelector("details").open = true;
       return;
@@ -923,6 +989,7 @@
     renderLists();
     if (dict) dict.render(model);
     if (review) review.render(model);
+    if (settingsPanel) settingsPanel.render(model);
     renderSource();
   }
 
@@ -943,6 +1010,7 @@
   function init() {
     if (initialized) return;
     initialized = true;
+    applyAppearance(null);
     applyI18n();
     wireGrid();
     wireTabs();
@@ -964,6 +1032,15 @@
       });
     }
     $("review-hard").addEventListener("click", () => { if (review && model) review.open("hard"); });
+    if (window.AdicSettings) {
+      settingsPanel = window.AdicSettings({
+        $, esc, fmt, send, applyAppearance, isDark,
+        lang: () => lang,
+        t: () => t,
+        getUi: () => currentUi,
+        insideAnki: () => typeof window.pycmd === "function",
+      });
+    }
     const openDict = (filters) => { if (dict && model) dict.open(filters); };
     $("cat-list").addEventListener("click", (ev) => {
       const link = ev.target.closest(".cat-link");
@@ -985,7 +1062,7 @@
     // Los datos los manda Python con AnkiDiccionario.render(...) cuando la página está lista
   }
 
-  window.AnkiDiccionario = { render, setLoading, openDictionary: (f) => dict && dict.open(f) };
+  window.AnkiDiccionario = { render, setLoading, applyAppearance, openDictionary: (f) => dict && dict.open(f) };
 
   if (document.readyState === "loading") document.addEventListener("DOMContentLoaded", init);
   else init();

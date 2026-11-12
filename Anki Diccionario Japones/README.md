@@ -8,7 +8,7 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
 
 ![Pestaña Repasar](docs/vista-previa-repaso.png)
 
-<sub>Vista previa con progreso de ejemplo sobre el mazo Kaishi 1.5k. También en [modo oscuro](docs/vista-previa-oscuro.png).</sub>
+<sub>Vista previa con progreso de ejemplo sobre el mazo Kaishi 1.5k. También en [modo oscuro](docs/vista-previa-oscuro.png), con [los 7 temas de colores](docs/temas.png) y con [una imagen de fondo](docs/fondo-imagen.png).</sub>
 
 ## Qué hace
 
@@ -34,6 +34,7 @@ Complemento para Anki que te muestra, de forma clara, cuántas palabras de japon
   - Atajos: Espacio voltea, 1 = no la sabía, 2 = la sabía, R = repetir el audio.
   - Al final ves cuántas sabías, las que fallaste con su botón **Abrir en Anki**, y puedes repasar solo las falladas.
   - Es solo práctica: **no cambia tus intervalos ni tus estadísticas de Anki**. A Anki solo se le pide reproducir el audio o abrir una tarjeta; nunca se registra un repaso.
+- En **Configuración** (el engrane ⚙ arriba a la derecha) eliges entre 7 temas de colores, modo claro u oscuro, un color o una imagen propia de fondo, el idioma, cuándo una palabra cuenta como sabida o difícil, y qué campos de tu mazo usar. Ya no hace falta editar el JSON.
 - Se adapta al modo claro u oscuro de Anki, y al español o inglés.
 
 ## Instalar
@@ -66,7 +67,7 @@ El complemento busca solo qué campo tiene la palabra, cuál la lectura y cuál 
 3. Si la palabra trae furigana (`日本[にほん]`), saca de ahí la lectura.
 4. También busca la oración de ejemplo, su furigana, su traducción y los audios de palabra y oración (por ejemplo `Sentence`, `Sentence Furigana`, `Sentence Meaning`, `Word Audio` y `Sentence Audio` en Kaishi; `Expression`, `Sentence-English` y `Vocabulary-Audio` en Core 2k/6k).
 
-En la parte de abajo del panel, **Cómo se leyó tu mazo** te dice qué campos usó. Si se equivocó, corrígelo en **Herramientas › Complementos › Configuración** con `field_mapping` (ver [`config.md`](anki_diccionario/config.md)).
+En la parte de abajo del panel, **Cómo se leyó tu mazo** te dice qué campos usó. Si se equivocó, corrígelo en **⚙ Configuración › Campos de tu mazo**: cada campo tiene un menú con "Automático", "Ninguno" o el campo que quieras. (También se puede con `field_mapping` en **Herramientas › Complementos › Configuración**; ver [`config.md`](anki_diccionario/config.md).)
 
 ## Categorías gramaticales
 
@@ -86,6 +87,36 @@ El complemento no trae JMdict completo, solo un índice de palabra, lectura y ca
 
 El nivel sale de las listas de vocabulario de [open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks) (licencia MIT), basadas en las de Jonathan Waller. Desde 2010 no hay listas oficiales del JLPT, así que es una guía. Si una palabra está escrita distinto en la lista (終わる / 終る, ご飯 / 御飯, 出来る / できる), la reconoce si tiene la misma lectura y algún kanji en común. Con Kaishi 1.5k, el 95 % de las palabras tienen nivel.
 
+## Configuración y temas de colores
+
+![Configuración](docs/configuracion.png)
+
+Todo se cambia desde el engrane ⚙ de la ventana. Los cambios de apariencia se ven al instante y se guardan solos; los que cambian los números (días para "sabida", fallos para "difícil", campos) vuelven a leer el mazo.
+
+**Temas.** Aizome (藍染, el índigo original del complemento) sigue siendo el tema por defecto. Los otros seis vienen de paletas abiertas que mucha gente usa a diario para leer pantallas por horas:
+
+| Tema | Por qué está |
+|---|---|
+| **Solarized** | Diseñada con el espacio de color CIELAB: sus versiones clara y oscura tienen el mismo contraste percibido. |
+| **Nord** | Azules árticos, fríos y apagados, pensados para leer sin cansar la vista. |
+| **Catppuccin** | Pastel (Latte de día, Mocha de noche); de los temas más populares hoy. |
+| **Rosé Pine** | Tonos apagados de pino y rosa, con luz suave (Dawn y Main). |
+| **Gruvbox** | Retro y cálida, tonos tierra con buen contraste. |
+| **Tokyo Night** | Azules de noche con acentos morados (Day y Night). |
+
+![Los 7 temas en claro y oscuro](docs/temas.png)
+
+Cómo se eligieron y ajustaron los colores:
+
+- **Contraste medido, no a ojo.** Cada tema pasa la norma de accesibilidad WCAG 2.1 en claro y en oscuro: el texto principal tiene al menos 7:1 (nivel AAA) y todo lo demás (texto secundario, botones, resaltados) al menos 4.5:1 (nivel AA). Donde la paleta original no llegaba, se oscureció o aclaró ese tono lo mínimo.
+- **El mapa se lee igual en todos los temas.** Los cuadros van de "pendiente" a "sabida" siempre de claro a oscuro (u oscuro a claro en modo oscuro), comprobado con la luminosidad L\* de CIELAB, para que "más oscuro = más aprendido" no cambie al cambiar de tema.
+- **Azules como base.** En estudios de preferencia de color, los azules y cianes son de los colores que más gusta a la gente y los amarillos oscuros y cafés de los que menos (Palmer y Schloss, 2010). Por eso la mayoría de los temas son azules o índigo, y los cálidos quedan como opción.
+- `dev/build_themes.py` revisa todo esto y genera `web/themes.css` y `web/themes.js`; si un tema no pasa, no se genera.
+
+**Fondo.** Puedes dejar el fondo del tema, elegir un color (con sugerencias tomadas de los mismos temas) o poner una imagen propia, como en el complemento *Custom Background*. La imagen se copia a `user_files/`, así que no se pierde si mueves el archivo original ni al actualizar el complemento. Encima se pone un **velo** del color del tema (0 a 95 %) y se puede desenfocar; el panel te avisa si el texto queda con poco contraste sobre ese fondo y te sugiere subir el velo.
+
+**Restablecer.** "Restablecer apariencia" regresa a Aizome sin fondo; "Restablecer todo" regresa todo a como venía, menos el mazo elegido. Los dos piden un segundo clic para confirmar.
+
 ## Estructura
 
 ```
@@ -97,9 +128,11 @@ Anki Diccionario Japones/
 │   ├── fields.py            detecta campos y limpia el texto
 │   ├── categories.py        busca cada palabra en JMdict y le pone sus categorías
 │   ├── jlpt.py              nivel JLPT de cada palabra
+│   ├── settings.py          valida y guarda la Configuración (temas, fondo, campos)
 │   ├── data/                índices de categorías (JMdict) y niveles JLPT
 │   ├── config.json / .md    configuración y su explicación
-│   └── web/                 la página del panel: dashboard.* (Progreso), dictionary.js (Diccionario) y review.js (Repasar)
+│   └── web/                 la página del panel: dashboard.* (Progreso), dictionary.js (Diccionario),
+│                            review.js (Repasar), settings.js (Configuración) y themes.* (temas, generados)
 ├── dev/                     herramientas para probar sin abrir Anki
 ├── docs/                    capturas
 └── dist/                    el .ankiaddon listo para instalar
@@ -127,6 +160,9 @@ python dev/build_pos_index.py JMdict_e.gz
 # Regenerar los niveles JLPT (src/ de open-anki-jlpt-decks)
 python dev/build_jlpt_index.py open-anki-jlpt-decks/src
 
+# Revisar el contraste de los temas y regenerar web/themes.css y web/themes.js
+python dev/build_themes.py
+
 # Generar el .ankiaddon
 python dev/package.py
 ```
@@ -137,7 +173,7 @@ python dev/package.py
 - [x] **Parte 2**: pestañas en la ventana (Progreso siempre es la página principal) y categorías gramaticales automáticas con JMdict (verbos godan/ichidan, adjetivos い/な, sustantivos…), con varias etiquetas por palabra y una sección "Por categoría" en Progreso
 - [x] **Parte 3**: pestaña Diccionario con todas las palabras, búsqueda (kanji, kana, rōmaji, significado), filtros por estado, categoría, nivel JLPT y kanji compartido, y botón para abrir la tarjeta en Anki
 - [x] **Parte 4**: repaso rápido dentro del complemento: eliges "Te cuestan trabajo" o "Estás aprendiendo", cuántas palabras quieres repasar, y se eligen al azar (práctica libre, no cambia nada en Anki)
-- [ ] **Parte 5**: configuración para personalizar el complemento: color de fondo o una imagen propia como fondo
+- [x] **Parte 5**: Configuración dentro de la ventana: 7 temas de colores con contraste comprobado (Aizome sigue por defecto), claro/oscuro, color o imagen de fondo con velo, idioma, criterios de "sabida" y "difícil", y elegir campos sin editar el JSON
 - [ ] **Parte 6**: exportar a una página web aparte
 
 ---
@@ -145,5 +181,7 @@ python dev/package.py
 Proyecto de Raul Juarez.
 
 Las categorías gramaticales vienen de JMdict, propiedad del [Electronic Dictionary Research and Development Group](https://www.edrdg.org/), y se usan bajo la licencia [CC BY-SA 4.0](https://www.edrdg.org/edrdg/licence.html). El índice derivado (`anki_diccionario/data/jmdict_pos.tsv.gz`) se distribuye bajo la misma licencia.
+
+Los temas se basan en las paletas de [Solarized](https://ethanschoonover.com/solarized/) (Ethan Schoonover), [Nord](https://www.nordtheme.com/) (Arctic Ice Studio), [Catppuccin](https://catppuccin.com/), [Rosé Pine](https://rosepinetheme.com/), [Gruvbox](https://github.com/morhetz/gruvbox) (Pavel Pertsev) y Tokyo Night ([enkia](https://github.com/enkia/tokyo-night-vscode-theme); variantes Day y Night de [tokyonight.nvim](https://github.com/folke/tokyonight.nvim)), paletas abiertas (MIT; tokyonight.nvim, Apache 2.0), con algunos tonos ajustados para pasar el contraste. Referencias: [WCAG 2.1, contraste mínimo](https://www.w3.org/WAI/WCAG21/Understanding/contrast-minimum.html) y S. E. Palmer y K. B. Schloss, "An ecological valence theory of human color preference", *PNAS* 107 (2010).
 
 Los niveles JLPT vienen de [open-anki-jlpt-decks](https://github.com/jamsinclair/open-anki-jlpt-decks) © 2020 Jamie Sinclair, licencia MIT.
